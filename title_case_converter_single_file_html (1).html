@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Case Converter Tool</title>
+  <style>
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--accent:#2563eb;--muted:#475569;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg); color:#0f172a}
+    .wrap{width:min(1100px,96%); padding:32px; border-radius:14px; background:var(--card); box-shadow:0 8px 34px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px; font-size:28px}
+    p.lead{margin:0 0 20px; color:var(--muted)}
+    .grid{display:grid; gap:18px; grid-template-columns:1fr 1fr}
+    .full{grid-column:1/-1}
+    textarea, .output{width:100%; min-height:150px; padding:16px; border-radius:10px; border:1px solid #cbd5e1; background:var(--card); color:inherit; font-size:16px; line-height:1.5; resize:vertical}
+    .output{white-space:pre-wrap; overflow:auto; background:#f1f5f9}
+    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    button{background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px}
+    button.secondary{background:#e2e8f0; color:#1e293b; border:1px solid #cbd5e1}
+    select{padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px}
+    .status{font-size:13px; color:var(--muted); margin-top:8px}
+    footer{margin-top:20px; text-align:center; color:var(--muted); font-size:13px}
+    @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <h1>Case Converter Tool</h1>
+    <p class="lead">Type or paste your text and choose the case format. Conversion happens automatically. Copy your result easily.</p>
+
+    <div class="grid">
+      <div class="full">
+        <label for="input" style="display:block;margin-bottom:6px;color:var(--muted)">Input</label>
+        <textarea id="input" placeholder="Type or paste text here..." aria-label="Input text"></textarea>
+      </div>
+
+      <div>
+        <label for="output" style="display:block;margin-bottom:6px;color:var(--muted)">Output</label>
+        <div id="output" class="output" role="textbox" aria-readonly="true" tabindex="0"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="controls">
+          <select id="caseSelect">
+            <option value="title">Title Case</option>
+            <option value="upper">UPPER CASE</option>
+            <option value="lower">lower case</option>
+            <option value="sentence">Sentence case</option>
+            <option value="camel">camelCase</option>
+            <option value="pascal">PascalCase</option>
+            <option value="snake">snake_case</option>
+            <option value="kebab">kebab-case</option>
+          </select>
+          <button id="copyBtn">Copy</button>
+          <button id="pasteBtn" class="secondary">Paste</button>
+          <button id="clearBtn" class="secondary">Clear</button>
+        </div>
+        <div class="status" id="status">Auto-converts as you type.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Shortcut: Press <kbd>Ctrl/⌘ + Enter</kbd> to copy output quickly.</div>
+    </footer>
+  </main>
+
+<script>
+function toTitleCase(str){
+  return str.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+function toSentenceCase(str){
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+function toCamelCase(str){
+  return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+}
+function toPascalCase(str){
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (m, i) => {
+    if(+m === 0) return ""; return m.toUpperCase();
+  });
+}
+function toSnakeCase(str){
+  return str.trim().toLowerCase().replace(/\s+/g, '_');
+}
+function toKebabCase(str){
+  return str.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+function convert(str, type){
+  switch(type){
+    case 'upper': return str.toUpperCase();
+    case 'lower': return str.toLowerCase();
+    case 'sentence': return toSentenceCase(str);
+    case 'camel': return toCamelCase(str);
+    case 'pascal': return toPascalCase(str);
+    case 'snake': return toSnakeCase(str);
+    case 'kebab': return toKebabCase(str);
+    case 'title': default: return toTitleCase(str);
+  }
+}
+
+// Elements
+const inputEl = document.getElementById('input');
+const outputEl = document.getElementById('output');
+const copyBtn = document.getElementById('copyBtn');
+const pasteBtn = document.getElementById('pasteBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusEl = document.getElementById('status');
+const caseSelect = document.getElementById('caseSelect');
+
+function updateOutput(){
+  const raw = inputEl.value;
+  const type = caseSelect.value;
+  const converted = convert(raw, type);
+  outputEl.textContent = converted;
+  statusEl.textContent = 'Converted to ' + caseSelect.options[caseSelect.selectedIndex].text;
+}
+
+inputEl.addEventListener('input', updateOutput);
+caseSelect.addEventListener('change', updateOutput);
+
+copyBtn.addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(outputEl.textContent);
+    statusEl.textContent = 'Copied to clipboard ✓';
+    copyBtn.textContent = 'Copied!';
+    setTimeout(()=> copyBtn.textContent = 'Copy', 1200);
+  }catch(e){ statusEl.textContent = 'Copy failed.'; }
+});
+
+pasteBtn.addEventListener('click', async ()=>{
+  try{
+    inputEl.value = await navigator.clipboard.readText();
+    updateOutput();
+    statusEl.textContent = 'Pasted from clipboard.';
+  }catch(e){ statusEl.textContent = 'Paste failed.'; }
+});
+
+clearBtn.addEventListener('click', ()=>{
+  inputEl.value=''; outputEl.textContent=''; statusEl.textContent='Cleared.';
+});
+
+inputEl.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey)&& e.key==='Enter') copyBtn.click();
+});
+
+updateOutput();
+</script>
+</body>
+</html>
