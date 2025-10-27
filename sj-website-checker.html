@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SJ Website Checker</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#050b17;
+      --bg-accent:linear-gradient(160deg,#0b1222 0%,#060b17 100%);
+      --card:#0e1726;
+      --card-strong:rgba(255,255,255,0.06);
+      --card-soft:rgba(255,255,255,0.04);
+      --border:rgba(255,255,255,0.08);
+      --accent:#38bdf8;
+      --accent-soft:#155e75;
+      --text:#e2e8f0;
+      --muted:#96adc8;
+      --error:#f87171;
+      --warning:#fbbf24;
+      --success:#34d399;
+      font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--bg-accent);color:var(--text)}
+    main.app{width:min(1180px,96vw);background:var(--card);border-radius:18px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(9,20,40,0.55);padding:28px 28px 36px;display:flex;flex-direction:column;gap:24px;backdrop-filter:blur(18px)}
+    header{display:flex;flex-direction:column;gap:10px}
+    h1{margin:0;font-size:26px;letter-spacing:0.4px;color:#f1f5f9}
+    p.lead{margin:0;color:var(--muted);max-width:720px;font-size:15px;line-height:1.6}
+    .toolbar{display:flex;flex-direction:column;gap:14px;background:var(--card-soft);padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,0.03)}
+    .nav-buttons{display:flex;flex-wrap:wrap;gap:10px}
+    button{font:inherit;font-weight:600;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;background:var(--accent-soft);color:var(--text);transition:background 0.2s,transform 0.2s,box-shadow 0.2s}
+    button:hover:not([disabled]){background:rgba(56,189,248,0.18);box-shadow:0 8px 20px rgba(6,182,212,0.25);transform:translateY(-1px)}
+    button:active:not([disabled]){transform:translateY(0)}
+    button[disabled]{opacity:0.45;cursor:not-allowed;box-shadow:none;background:rgba(148,163,184,0.18)}
+    button.secondary{background:transparent;border:1px solid rgba(148,163,184,0.35);color:var(--muted)}
+    button.secondary:hover:not([disabled]){background:rgba(148,163,184,0.08);color:#f8fafc}
+    button.danger{background:rgba(248,113,113,0.18);color:#fecaca}
+    button.danger:hover:not([disabled]){background:rgba(248,113,113,0.28)}
+    .nav-buttons button{flex:1 1 120px;min-width:120px}
+    .address-bar{display:flex;flex-wrap:wrap;gap:10px}
+    .address-bar input{flex:1 1 320px;min-height:48px;padding:0 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(15,23,42,0.65);color:var(--text);font-size:15px;transition:border 0.2s,box-shadow 0.2s}
+    .address-bar input:focus{outline:none;border-color:rgba(56,189,248,0.55);box-shadow:0 0 0 3px rgba(56,189,248,0.18)}
+    .address-bar button{min-height:48px;padding:0 18px}
+    .status-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .status-indicator{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.05);min-height:42px;transition:background 0.25s,border 0.25s,color 0.25s}
+    .status-indicator .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);box-shadow:0 0 12px rgba(150,173,200,0.45)}
+    .status-indicator[data-state="loading"]{background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35)}
+    .status-indicator[data-state="loading"] .dot{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+    .status-indicator[data-state="ready"]{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:#bbf7d0}
+    .status-indicator[data-state="ready"] .dot{background:var(--success);box-shadow:0 0 12px rgba(52,211,153,0.5)}
+    .status-indicator[data-state="error"]{background:rgba(248,113,113,0.16);border-color:rgba(248,113,113,0.35);color:#fecaca}
+    .status-indicator[data-state="error"] .dot{background:var(--error);box-shadow:0 0 12px rgba(248,113,113,0.5)}
+    .status-indicator[data-state="warning"]{background:rgba(251,191,36,0.14);border-color:rgba(251,191,36,0.32);color:#fef3c7}
+    .status-indicator[data-state="warning"] .dot{background:var(--warning);box-shadow:0 0 12px rgba(251,191,36,0.45)}
+    .status-indicator[data-state="idle"]{color:var(--muted)}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.5}}
+    .viewer{position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);background:rgba(11,17,29,0.85)}
+    .frame-container{position:relative;min-height:58vh}
+    iframe{width:100%;height:100%;border:none;background:#020617}
+    iframe::backdrop{background:#020617}
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,12,22,0.8);backdrop-filter:blur(16px);color:var(--text);text-align:center;padding:32px;transition:opacity 0.3s ease,visibility 0.3s ease;opacity:1;visibility:visible}
+    .overlay.hidden{opacity:0;visibility:hidden}
+    .overlay-content{max-width:520px;display:flex;flex-direction:column;align-items:center;gap:16px;background:rgba(15,23,42,0.6);padding:24px 28px;border-radius:18px;border:1px solid rgba(255,255,255,0.07)}
+    .spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(148,163,184,0.25);border-top-color:var(--accent);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .overlay[data-state="error"] .spinner,.overlay[data-state="info"] .spinner{display:none}
+    .overlay h2{margin:0;font-size:18px;color:#f8fafc}
+    .overlay p{margin:0;color:var(--muted);line-height:1.6;font-size:14px}
+    .overlay a{color:var(--accent)}
+    .notes{background:var(--card-soft);padding:18px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.04);font-size:13px;color:var(--muted);line-height:1.7}
+    .notes strong{color:#e2e8f0}
+    .notes ul{margin:8px 0 0 16px;padding:0;display:grid;gap:6px}
+    .notes li{list-style:disc}
+    @media (max-width:900px){body{padding:18px}main.app{padding:22px}h1{font-size:22px}.nav-buttons button{flex:1 1 calc(50% - 10px)}.address-bar input{flex:1 1 100%;min-width:100%}.address-bar button{flex:1 1 calc(50% - 10px)}.frame-container{min-height:60vh}}
+    @media (max-width:620px){.nav-buttons button,.address-bar button{flex:1 1 100%}}
+  </style>
+</head>
+<body>
+  <main class="app" role="main">
+    <header>
+      <h1>SJ Website Checker</h1>
+      <p class="lead">Preview and validate websites through a secure embedded viewer with quick navigation controls, helpful status messaging, and guidance for CORS or X-Frame-Options restrictions.</p>
+    </header>
+
+    <section class="toolbar" aria-label="Navigation controls">
+      <div class="nav-buttons" role="group" aria-label="History navigation">
+        <button type="button" id="backBtn" aria-label="Back" disabled>⟵ Back</button>
+        <button type="button" id="forwardBtn" aria-label="Forward" disabled>Forward ⟶</button>
+        <button type="button" id="refreshBtn" aria-label="Refresh" disabled>⟳ Refresh</button>
+        <button type="button" id="homeBtn" class="secondary">⌂ Home</button>
+      </div>
+
+      <div class="address-bar">
+        <input id="urlInput" type="text" inputmode="url" spellcheck="false" placeholder="Enter or paste a URL (e.g. https://example.com)" aria-label="URL input" />
+        <button type="button" id="pasteBtn" class="secondary">Paste</button>
+        <button type="button" id="goBtn" aria-label="Load URL">Go</button>
+      </div>
+
+      <div class="status-row">
+        <div id="status" class="status-indicator" data-state="idle" aria-live="polite">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="status-text" id="statusText">Ready. Enter a URL to begin.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="viewer" aria-label="Website preview area">
+      <div class="frame-container">
+        <iframe id="previewFrame" title="Website preview" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-same-origin"></iframe>
+        <div id="overlay" class="overlay" data-state="info">
+          <div class="overlay-content">
+            <div class="spinner" aria-hidden="true"></div>
+            <h2 id="overlayTitle">Awaiting a URL</h2>
+            <p id="overlayMessage">Enter a website address above to load it in the secure preview window.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="notes" aria-label="Important information">
+      <strong>Heads up on CORS &amp; security:</strong>
+      <ul>
+        <li>Many websites block being embedded inside iframes using X-Frame-Options or Content-Security-Policy headers. When that happens you will see an error notice here.</li>
+        <li>The viewer runs entirely in your browser. It cannot bypass CORS or mixed-content restrictions and it does not proxy or log your traffic.</li>
+        <li>Use this tool for quick checks only—avoid entering credentials or sensitive data on third-party sites within the embedded frame.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const goBtn = document.getElementById('goBtn');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const backBtn = document.getElementById('backBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const statusEl = document.getElementById('status');
+    const statusTextEl = document.getElementById('statusText');
+    const iframe = document.getElementById('previewFrame');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayMessage = document.getElementById('overlayMessage');
+
+    const historyStack = [];
+    let historyIndex = -1;
+    let pendingUrl = '';
+    let loadingTimer = null;
+    const LOAD_TIMEOUT = 12000;
+
+    function normalizeUrl(input){
+      if(!input) return '';
+      let candidate = input.trim();
+      if(!candidate) return '';
+      if(!/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(candidate)){
+        candidate = 'https://' + candidate;
+      }
+      try{
+        const parsed = new URL(candidate);
+        if(parsed.protocol !== 'http:' && parsed.protocol !== 'https:'){
+          return '';
+        }
+        return parsed.href;
+      }catch(err){
+        return '';
+      }
+    }
+
+    function clearLoadingTimer(){
+      if(loadingTimer){
+        clearTimeout(loadingTimer);
+        loadingTimer = null;
+      }
+    }
+
+    function safeDisplay(url){
+      try{
+        const parsed = new URL(url);
+        return parsed.hostname.replace(/^www\./,'');
+      }catch(err){
+        return url;
+      }
+    }
+
+    function setStatus(message, state){
+      statusEl.dataset.state = state;
+      statusTextEl.textContent = message;
+    }
+
+    function showOverlay(title, message, state='info'){
+      overlay.dataset.state = state;
+      overlayTitle.textContent = title;
+      overlayMessage.textContent = message;
+      overlay.classList.remove('hidden');
+    }
+
+    function hideOverlay(){
+      overlay.classList.add('hidden');
+    }
+
+    function startLoading(url){
+      clearLoadingTimer();
+      const host = safeDisplay(url);
+      setStatus('Loading ' + host + ' …', 'loading');
+      showOverlay('Loading ' + host, 'Attempting a secure connection. Some sites may take a few moments to appear or may block embedding.', 'loading');
+      loadingTimer = setTimeout(() => {
+        const message = 'We could not confirm the site loaded. It may block embedding via X-Frame-Options or Content-Security-Policy.';
+        setStatus(message, 'error');
+        showOverlay('Unable to display this site', 'Many websites prevent being shown in an embedded frame for security reasons. Try opening the link in a new tab or using a dedicated proxy service.', 'error');
+        loadingTimer = null;
+      }, LOAD_TIMEOUT);
+    }
+
+    function updateNavButtons(){
+      backBtn.disabled = historyIndex <= 0;
+      forwardBtn.disabled = historyIndex === -1 || historyIndex >= historyStack.length - 1;
+      refreshBtn.disabled = historyIndex === -1;
+    }
+
+    function loadUrl(url, { pushHistory = true } = {}){
+      if(pushHistory){
+        if(historyIndex < historyStack.length - 1){
+          historyStack.splice(historyIndex + 1);
+        }
+        historyStack.push(url);
+        historyIndex = historyStack.length - 1;
+      }
+      pendingUrl = url;
+      updateNavButtons();
+      startLoading(url);
+      iframe.src = url;
+      urlInput.value = url;
+    }
+
+    function navigateFromInput(){
+      const normalized = normalizeUrl(urlInput.value);
+      if(!normalized){
+        setStatus('Please enter a valid URL (example: https://example.com).', 'error');
+        showOverlay('Invalid URL', 'Double-check the address and include a valid domain name.', 'error');
+        return;
+      }
+      loadUrl(normalized);
+    }
+
+    goBtn.addEventListener('click', navigateFromInput);
+
+    urlInput.addEventListener('keydown', (event) => {
+      if(event.key === 'Enter'){
+        event.preventDefault();
+        navigateFromInput();
+      }
+    });
+
+    pasteBtn.addEventListener('click', async () => {
+      if(!navigator.clipboard || !navigator.clipboard.readText){
+        setStatus('Clipboard access is not supported in this browser.', 'error');
+        return;
+      }
+      try{
+        const text = await navigator.clipboard.readText();
+        if(!text){
+          setStatus('Clipboard was empty.', 'warning');
+          return;
+        }
+        urlInput.value = text.trim();
+        setStatus('Pasted URL from clipboard.', 'ready');
+        navigateFromInput();
+      }catch(err){
+        setStatus('Clipboard permission was denied by the browser.', 'error');
+      }
+    });
+
+    backBtn.addEventListener('click', () => {
+      if(historyIndex > 0){
+        historyIndex -= 1;
+        loadUrl(historyStack[historyIndex], { pushHistory:false });
+      }
+    });
+
+    forwardBtn.addEventListener('click', () => {
+      if(historyIndex < historyStack.length - 1){
+        historyIndex += 1;
+        loadUrl(historyStack[historyIndex], { pushHistory:false });
+      }
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      if(historyIndex >= 0){
+        loadUrl(historyStack[historyIndex], { pushHistory:false });
+      }
+    });
+
+    homeBtn.addEventListener('click', () => {
+      historyStack.length = 0;
+      historyIndex = -1;
+      pendingUrl = '';
+      iframe.src = 'about:blank';
+      urlInput.value = '';
+      clearLoadingTimer();
+      updateNavButtons();
+      setStatus('Ready. Enter a URL to begin.', 'idle');
+      showOverlay('Awaiting a URL', 'Enter a website address above to load it in the secure preview window.', 'info');
+    });
+
+    iframe.addEventListener('load', () => {
+      clearLoadingTimer();
+      if(!pendingUrl && historyIndex === -1){
+        setStatus('Ready. Enter a URL to begin.', 'idle');
+        showOverlay('Awaiting a URL', 'Enter a website address above to load it in the secure preview window.', 'info');
+        return;
+      }
+      let displayUrl = pendingUrl;
+      try{
+        const current = iframe.contentWindow.location.href;
+        if(current && current !== 'about:blank'){
+          displayUrl = current;
+        }
+      }catch(err){
+        // Cross-origin access will throw. Best effort only.
+      }
+      pendingUrl = displayUrl;
+      if(displayUrl){
+        urlInput.value = displayUrl;
+      }
+      const host = safeDisplay(displayUrl || 'website');
+      setStatus('Loaded ' + host, 'ready');
+      try{
+        const doc = iframe.contentDocument;
+        if(!doc || !doc.body || doc.body.childElementCount === 0){
+          setStatus('The site loaded without visible content. It may block embedding in iframes.', 'error');
+          showOverlay('The site may have blocked embedding', 'The requested site loaded without visible content. It may require same-origin access or disallow embedding altogether.', 'error');
+        }else{
+          hideOverlay();
+        }
+      }catch(err){
+        hideOverlay();
+      }
+    });
+
+    iframe.addEventListener('error', () => {
+      clearLoadingTimer();
+      setStatus('Failed to load the requested site.', 'error');
+      showOverlay('Unable to display this site', 'The site refused to load in an embedded frame. Open it in a new tab instead.', 'error');
+    });
+
+    // Initialize home state
+    homeBtn.click();
+  </script>
+</body>
+</html>
