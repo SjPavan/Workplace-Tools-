@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Company Data Extraction & Analysis Toolkit</title>
+  <style>
+    :root {
+      --bg:#070e1d;
+      --surface:#0d172e;
+      --card:#111f39;
+      --accent:#3b82f6;
+      --accent-soft:rgba(59,130,246,0.16);
+      --muted:#94a3b8;
+      --positive:#22c55e;
+      --warning:#facc15;
+      --danger:#f97316;
+      --border:rgba(148,163,184,0.16);
+      --text:#e2e8f0;
+      font-family:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#0b1730 0%,#050b18 45%,#03060d 100%);color:var(--text);display:flex;align-items:center;justify-content:center;padding:32px 18px}
+    main{width:min(1200px,100%);background:linear-gradient(180deg,rgba(17,31,57,0.96),rgba(17,31,57,0.82));border-radius:18px;padding:32px 30px 40px;box-shadow:0 30px 80px rgba(2,6,23,0.55);backdrop-filter:blur(12px);}
+    h1{margin:0 0 12px;font-size:26px;font-weight:700;letter-spacing:-0.015em}
+    p.lead{margin:0 0 22px;color:var(--muted);line-height:1.55}
+    .panel{background:rgba(8,14,28,0.75);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px}
+    label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+    .input-row{display:flex;gap:12px;flex-wrap:wrap}
+    input[type="url"]{flex:1;min-width:220px;padding:14px 16px;border-radius:11px;border:1px solid rgba(148,163,184,0.18);background-color:rgba(10,18,35,0.85);color:var(--text);font-size:15px;transition:border 0.2s,box-shadow 0.2s}
+    input[type="url"]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.16)}
+    button{border:none;border-radius:11px;padding:13px 18px;font-weight:600;font-size:15px;cursor:pointer;transition:transform 0.18s ease,box-shadow 0.18s ease,background 0.18s ease;color:#03122d}
+    button.primary{background:var(--accent);color:white;box-shadow:0 10px 30px rgba(59,130,246,0.35)}
+    button.primary:disabled{opacity:0.6;cursor:not-allowed;box-shadow:none}
+    button.secondary{background:transparent;color:var(--muted);border:1px solid var(--border)}
+    button.secondary:hover{background:rgba(148,163,184,0.08);color:var(--text)}
+    button:active{transform:translateY(1px)}
+    .status-line{margin-top:10px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;min-height:18px}
+    .status-line strong{color:var(--text)}
+    .loader{width:16px;height:16px;border:3px solid rgba(148,163,184,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
+    .progress-item{padding:14px;border-radius:12px;background:rgba(10,18,35,0.7);border:1px solid var(--border);min-height:92px;display:flex;flex-direction:column;gap:8px;justify-content:space-between}
+    .progress-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+    .progress-item[data-state="pending"] .progress-title{color:var(--muted)}
+    .progress-item[data-state="active"]{border-color:var(--accent);box-shadow:0 0 0 1px rgba(59,130,246,0.14)}
+    .progress-item[data-state="done"]{border-color:rgba(34,197,94,0.5)}
+    .progress-item[data-state="error"]{border-color:var(--danger)}
+    .progress-detail{font-size:13px;color:var(--muted);line-height:1.4;flex:1}
+    .progress-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 8px;border-radius:100px;background:var(--accent-soft);color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+    .progress-item[data-state="done"] .progress-pill{background:rgba(34,197,94,0.18);color:var(--positive)}
+    .progress-item[data-state="error"] .progress-pill{background:rgba(249,115,22,0.18);color:var(--danger)}
+
+    .table-wrap{margin-top:24px;overflow:auto;border-radius:14px;border:1px solid var(--border);background:rgba(8,14,28,0.75)}
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    thead{background:rgba(15,27,51,0.85);text-transform:uppercase;font-size:12px;letter-spacing:0.08em;color:var(--muted)}
+    th,td{padding:14px 16px;text-align:left;border-bottom:1px solid rgba(148,163,184,0.12)}
+    tbody tr:last-child td{border-bottom:none}
+    tbody th{width:220px;font-size:14px;font-weight:600;color:var(--text);background:rgba(15,27,51,0.46)}
+    tbody td{font-size:14px;line-height:1.55;color:var(--text)}
+    tbody td[contenteditable="true"]{cursor:text;transition:background 0.16s}
+    tbody td[contenteditable="true"]:focus{outline:none;background:rgba(59,130,246,0.08)}
+    .note{margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;display:flex;gap:10px}
+
+    .actions{margin-top:24px;display:flex;flex-wrap:wrap;gap:10px}
+    .actions button{min-width:150px;text-align:center}
+    .actions button.secondary{color:var(--muted)}
+
+    footer{margin-top:30px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+    .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(148,163,184,0.08);border-radius:999px;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600}
+    .tag svg{width:13px;height:13px}
+
+    @media (max-width:900px){
+      main{padding:26px 22px}
+      h1{font-size:22px}
+      .table-wrap{overflow-x:auto}
+      tbody th{width:180px}
+    }
+    @media (max-width:600px){
+      body{padding:22px 12px}
+      .input-row{flex-direction:column}
+      button{width:100%}
+      .actions{flex-direction:column}
+      .actions button{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <main role="main">
+    <div class="tag" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 2.5L17.5 6.25V13.75L10 17.5L2.5 13.75V6.25L10 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 6.25L14.5833 8.54167V13.125L10 15.4167L5.41667 13.125V8.54167L10 6.25Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Company Intelligence Suite
+    </div>
+    <h1>Company Data Extraction & Analysis Toolkit</h1>
+    <p class="lead">Paste a company website URL to generate a 21-point business dossier. The tool performs best-effort client-side extraction, classifies the business, and prepares results you can edit, copy, or export. Cells are fully editable so you can refine anything manually.</p>
+
+    <section class="panel" aria-labelledby="analyze-header">
+      <label id="analyze-header" for="urlInput">Company Website</label>
+      <div class="input-row">
+        <input id="urlInput" name="url" type="url" placeholder="https://www.example.com" autocomplete="off" spellcheck="false" />
+        <button class="primary" id="analyzeBtn" type="button">Analyze</button>
+        <button class="secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+      <div class="status-line" id="statusLine">
+        <span class="status-text">Awaiting input…</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Analysis progress">
+      <div class="progress-grid" id="progressGrid"></div>
+    </section>
+
+    <section>
+      <div class="table-wrap" role="region" aria-live="polite">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Analysis Point</th>
+              <th scope="col">Result (Editable)</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <div class="note">
+        <span style="font-weight:600;color:var(--text);">Tip:</span>
+        Double-click any cell to edit manually. Fetched values follow smart title casing, while URLs and emails keep their original format.
+      </div>
+    </section>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2 style="margin:0 0 12px;font-size:18px;letter-spacing:-0.01em;">Export Options</h2>
+      <p style="margin:0 0 18px;color:var(--muted);font-size:13.5px;line-height:1.6;">Copy the full analysis to your clipboard or download a CSV snapshot to share with your team.</p>
+      <div class="actions">
+        <button class="primary" id="copyBtn" type="button">Copy Full Summary</button>
+        <button class="secondary" id="csvBtn" type="button">Download CSV</button>
+      </div>
+    </div>
+
+    <footer>
+      Designed for rapid due diligence. Some websites block automated access via CORS — when data is missing, use the editable cells to finalise the profile.
+    </footer>
+  </main>
+
+  <script>
+    const FIELDS = [
+      { key: 'companyName', label: 'Company Name', titleCase: true },
+      { key: 'mainBusiness', label: 'Main Business', titleCase: true },
+      { key: 'address', label: 'Address', titleCase: true },
+      { key: 'industry', label: 'Industry', titleCase: true },
+      { key: 'offerings', label: 'Offerings', titleCase: true },
+      { key: 'type', label: 'Type', titleCase: true },
+      { key: 'supplyClassification', label: 'Manufacturer / Supplier / Distributor', titleCase: true },
+      { key: 'magazine', label: 'Magazine', titleCase: true },
+      { key: 'linkedinProfile', label: 'LinkedIn Profile', titleCase: false },
+      { key: 'aiCategory', label: 'AI Category', titleCase: true },
+      { key: 'technology', label: 'Technology', titleCase: true },
+      { key: 'categoryName', label: 'Category Name', titleCase: true },
+      { key: 'businessModel', label: 'Business Model', titleCase: true },
+      { key: 'sector', label: 'Comes Under', titleCase: true },
+      { key: 'serviceGiven', label: 'Service Given', titleCase: true },
+      { key: 'productStatus', label: 'Own Product / Seller / Partner', titleCase: true },
+      { key: 'bestFit', label: 'Best Fit', titleCase: true },
+      { key: 'emailAddresses', label: 'Email Addresses', titleCase: false },
+      { key: 'parentCompany', label: 'Parent Company', titleCase: true },
+      { key: 'companyType', label: 'Company Type', titleCase: true },
+      { key: 'techOrNot', label: 'Tech / Non-Tech', titleCase: true },
+      { key: 'conclusion', label: 'Conclusion', titleCase: true }
+    ];
+
+    const PROGRESS_STEPS = [
+      { id: 'fetch', title: 'Fetch Website', detail: 'Downloading public-facing website content.' },
+      { id: 'parse', title: 'Parse & Detect Signals', detail: 'Processing meta tags, headings, and on-page copy.' },
+      { id: 'emails', title: 'Scan For Emails & Contacts', detail: 'Searching main, contact, and policy pages for addresses.' },
+      { id: 'classify', title: 'Business Classification', detail: 'Mapping industry, business model, and offering mix.' },
+      { id: 'finalize', title: 'Finalize Summary', detail: 'Compiling editable dossier for export.' }
+    ];
+
+    const dataState = Object.fromEntries(FIELDS.map(f => [f.key, 'Awaiting Analysis']));
+    const resultsBody = document.getElementById('resultsBody');
+    const progressGrid = document.getElementById('progressGrid');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const csvBtn = document.getElementById('csvBtn');
+    const statusLine = document.getElementById('statusLine');
+    const statusText = statusLine.querySelector('.status-text');
+    const urlInput = document.getElementById('urlInput');
+
+    (function initTable(){
+      const frag = document.createDocumentFragment();
+      FIELDS.forEach(field => {
+        const row = document.createElement('tr');
+        const header = document.createElement('th');
+        header.scope = 'row';
+        header.textContent = field.label;
+        const valueCell = document.createElement('td');
+        valueCell.dataset.key = field.key;
+        valueCell.contentEditable = 'true';
+        valueCell.spellcheck = false;
+        valueCell.textContent = dataState[field.key];
+        valueCell.addEventListener('input', () => {
+          dataState[field.key] = valueCell.textContent.trim();
+        });
+        row.append(header,valueCell);
+        frag.appendChild(row);
+      });
+      resultsBody.appendChild(frag);
+    })();
+
+    (function initProgress(){
+      const frag = document.createDocumentFragment();
+      PROGRESS_STEPS.forEach(step => {
+        const card = document.createElement('div');
+        card.className = 'progress-item';
+        card.dataset.state = 'pending';
+        card.id = `step-${step.id}`;
+
+        const title = document.createElement('div');
+        title.className = 'progress-title';
+        title.innerHTML = `<span class="progress-pill">Pending</span>${step.title}`;
+
+        const detail = document.createElement('div');
+        detail.className = 'progress-detail';
+        detail.textContent = step.detail;
+
+        card.append(title, detail);
+        frag.appendChild(card);
+      });
+      progressGrid.appendChild(frag);
+    })();
+
+    function updateProgress(stepId, state, message){
+      const card = document.getElementById(`step-${stepId}`);
+      if(!card) return;
+      card.dataset.state = state;
+      const pill = card.querySelector('.progress-pill');
+      const detail = card.querySelector('.progress-detail');
+      if(pill){
+        let label = 'Pending';
+        if(state === 'active') label = 'In Progress';
+        else if(state === 'done') label = 'Completed';
+        else if(state === 'error') label = 'Attention';
+        pill.textContent = label;
+      }
+      if(message && detail){
+        detail.textContent = message;
+      }
+    }
+
+    function resetProgress(){
+      PROGRESS_STEPS.forEach(step => updateProgress(step.id,'pending',step.detail));
+    }
+
+    function toSmartTitleCase(text){
+      if(!text) return '';
+      return text.split(/(\s+)/).map(part => {
+        if(!part.trim()) return part;
+        const word = part.trim();
+        if(/^[0-9A-Z&/()\-]+$/.test(word)){
+          return word;
+        }
+        if(word.length === 1){
+          return word.toUpperCase();
+        }
+        const lowered = word.toLowerCase();
+        return lowered.charAt(0).toUpperCase() + lowered.slice(1);
+      }).join('');
+    }
+
+    function formatValue(field, value){
+      if(value == null || value === ''){
+        return field.titleCase ? 'Manual Input Recommended' : 'Not Available — Update Manually';
+      }
+      if(!field.titleCase) return value;
+      return toSmartTitleCase(value);
+    }
+
+    function setFieldValue(key, value){
+      const field = FIELDS.find(f => f.key === key);
+      if(!field) return;
+      const cell = resultsBody.querySelector(`td[data-key="${key}"]`);
+      const formatted = formatValue(field, value);
+      if(cell){
+        cell.textContent = formatted;
+      }
+      dataState[key] = formatted;
+    }
+
+    function normalizeUrl(raw){
+      if(!raw) return '';
+      try{
+        const trimmed = raw.trim();
+        if(!trimmed) return '';
+        const hasProtocol = /^https?:\/\//i.test(trimmed);
+        const url = new URL(hasProtocol ? trimmed : `https://${trimmed}`);
+        return url.href.replace(/\/$/, '/');
+      }catch(err){
+        return '';
+      }
+    }
+
+    async function fetchWithFallback(targetUrl){
+      const result = { html: '', usedProxy: false, url: targetUrl };
+      try{
+        const direct = await fetch(targetUrl, { mode: 'cors' });
+        if(direct.ok){
+          result.html = await direct.text();
+          return result;
+        }
+      }catch(err){/* ignore, fallback next */}
+      try{
+        const proxiedUrl = `https://r.jina.ai/${targetUrl}`;
+        const proxied = await fetch(proxiedUrl);
+        if(proxied.ok){
+          result.html = await proxied.text();
+          result.usedProxy = true;
+          result.url = proxiedUrl;
+          return result;
+        }
+      }catch(err){/* ignore */}
+      return result;
+    }
+
+    function createDocFromHTML(html){
+      if(!html) return null;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      if(doc && doc.body && doc.body.childElementCount > 0){
+        return doc;
+      }
+      const fallbackDoc = document.implementation.createHTMLDocument('fallback');
+      fallbackDoc.body.innerHTML = html;
+      return fallbackDoc;
+    }
+
+    function extractText(doc){
+      if(!doc) return '';
+      return doc.body ? doc.body.textContent || '' : '';
+    }
+
+    function takeFirstNonEmpty(...values){
+      for(const val of values){
+        if(val && val.trim()) return val.trim();
+      }
+      return '';
+    }
+
+    function extractCompanyName(doc, meta){
+      const title = doc.querySelector('title')?.textContent.trim() || '';
+      const ogSite = doc.querySelector('meta[property="og:site_name"]')?.content || '';
+      const ogTitle = doc.querySelector('meta[property="og:title"]')?.content || '';
+      const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.content || '';
+      const h1 = doc.querySelector('h1')?.textContent.trim() || '';
+      const base = takeFirstNonEmpty(ogSite, ogTitle, twitterTitle, h1, title, meta.hostname.replace('www.',''));
+      if(!base) return '';
+      const cleaned = base.split(/[-|•–]/)[0].trim();
+      return cleaned || base;
+    }
+
+    function extractMainBusiness(doc, text){
+      const description = doc.querySelector('meta[name="description"]')?.content || '';
+      const hero = doc.querySelector('main h1, header h1, h1')?.nextElementSibling?.textContent || '';
+      const candidate = takeFirstNonEmpty(description, hero);
+      if(candidate){
+        return candidate.length > 220 ? candidate.slice(0,217) + '…' : candidate;
+      }
+      const sentences = text.split(/[.!?]\s+/).map(s => s.trim()).filter(Boolean);
+      return sentences[0] || '';
+    }
+
+    function extractAddress(doc, text){
+      const addressNodes = Array.from(doc.querySelectorAll('[itemprop*="address" i], address, .address, [class*="address"]'));
+      const addrText = addressNodes.map(node => node.textContent.trim()).find(Boolean);
+      if(addrText){
+        return addrText.replace(/\s+/g,' ').trim();
+      }
+      const addressRegex = /(\d{1,6}\s+[A-Za-z0-9.,'\- ]+\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Highway|Hwy|Way|Court|Ct)[^\n,]*[,\n]\s*[A-Za-z .']+(,\s*[A-Z]{2})?\s*\d{3,6}(-\d{4})?/i;
+      const match = text.match(addressRegex);
+      if(match){
+        return match[0].replace(/\s+/g,' ').trim();
+      }
+      const countryRegex = /(United States|USA|Canada|United Kingdom|UK|Australia|India|Germany|France|Singapore|UAE|United Arab Emirates)/i;
+      const countryMatch = text.match(countryRegex);
+      if(countryMatch){
+        return countryMatch[0];
+      }
+      return '';
+    }
+
+    const INDUSTRIES = [
+      { label: 'Information Technology & Services', keywords: ['software','technology','digital','it services','cloud','platform','saas','data'] },
+      { label: 'Healthcare & Life Sciences', keywords: ['health','hospital','medical','patient','clinic','pharma','biotech','life science'] },
+      { label: 'Financial Services & Fintech', keywords: ['financial','fintech','bank','insurance','wealth','investment','payments','lending'] },
+      { label: 'Manufacturing & Industrial', keywords: ['manufacturing','industrial','engineering','factory','production','automation','supply chain'] },
+      { label: 'Retail & E-Commerce', keywords: ['retail','ecommerce','shopping','store','consumer goods','omnichannel'] },
+      { label: 'Education & Training', keywords: ['education','learning','training','school','university','students','courses'] },
+      { label: 'Marketing & Advertising', keywords: ['marketing','advertising','campaign','brand','seo','content','lead generation'] },
+      { label: 'Human Resources & Staffing', keywords: ['recruitment','staffing','talent','hr','human resources','payroll','workforce'] },
+      { label: 'Energy & Utilities', keywords: ['energy','power','solar','wind','renewable','utilities','oil','gas'] },
+      { label: 'Logistics & Transportation', keywords: ['logistics','transport','delivery','fleet','shipping','freight','mobility'] },
+      { label: 'Government & Public Sector', keywords: ['government','public sector','municipal','civic','federal','state agency'] },
+      { label: 'Real Estate & Construction', keywords: ['real estate','property','construction','architecture','building','infrastructure'] },
+      { label: 'Hospitality & Travel', keywords: ['hotel','hospitality','travel','tourism','restaurant','food service'] }
+    ];
+
+    function detectIndustry(text){
+      const lower = text.toLowerCase();
+      let match = INDUSTRIES[0];
+      let score = 0;
+      for(const industry of INDUSTRIES){
+        let localScore = 0;
+        for(const keyword of industry.keywords){
+          if(lower.includes(keyword)) localScore += 1;
+        }
+        if(localScore > score){
+          score = localScore;
+          match = industry;
+        }
+      }
+      if(score === 0){
+        return 'General Business Services';
+      }
+      return match.label;
+    }
+
+    function determineType(text){
+      const lower = text.toLowerCase();
+      const scores = {
+        service: (lower.match(/service|consulting|managed service|outsourcing|advisory|agency/g) || []).length,
+        solution: (lower.match(/solution|implementation|integration|deployment/g) || []).length,
+        software: (lower.match(/software|platform|saas|application|product|tool/g) || []).length
+      };
+      if(scores.software >= scores.service && scores.software >= scores.solution && scores.software > 0) return 'Software-Based';
+      if(scores.solution >= scores.service && scores.solution > 0) return 'Solution-Based';
+      if(scores.service > 0) return 'Service-Based';
+      return 'Service-Based';
+    }
+
+    function classifySupply(text){
+      const lower = text.toLowerCase();
+      if(lower.includes('manufacturer')) return 'Manufacturer';
+      if(lower.includes('distributor')) return 'Distributor';
+      if(lower.includes('supplier')) return 'Supplier';
+      if(lower.includes('reseller')) return 'Reseller';
+      if(lower.includes('integrator')) return 'Systems Integrator';
+      return 'Service Provider';
+    }
+
+    function determineMagazine(type, industry){
+      if(industry.includes('Technology')) return 'Technology & Innovation Magazine';
+      if(industry.includes('Healthcare')) return 'Healthcare & Life Sciences Spotlight';
+      if(industry.includes('Financial')) return 'Fintech & Financial Services Chronicle';
+      if(industry.includes('Manufacturing')) return 'Industrial & Manufacturing Review';
+      if(type === 'Software-Based') return 'Software Product Showcase';
+      return 'Business Services Digest';
+    }
+
+    function findLinkedIn(html, doc){
+      const anchors = Array.from(doc.querySelectorAll('a[href*="linkedin.com"]'));
+      if(anchors.length){
+        const href = anchors[0].getAttribute('href');
+        return href.startsWith('http') ? href : `https://www.linkedin.com${href}`;
+      }
+      const regex = /(https?:\/\/[^"'\s>]+linkedin\.com[^"'\s<]*)/i;
+      const match = html.match(regex);
+      return match ? match[1] : '';
+    }
+
+    function determineAICategory(text){
+      const lower = text.toLowerCase();
+      if(lower.includes('artificial intelligence') || lower.includes('machine learning') || lower.includes('ai ')) return 'Artificial Intelligence & Automation';
+      if(lower.includes('data') || lower.includes('analytics')) return 'Data Analytics & Intelligence';
+      if(lower.includes('cloud')) return 'Cloud Technology Solutions';
+      if(lower.includes('cyber') || lower.includes('security')) return 'Cybersecurity & Risk Management';
+      return 'Business & Technology Services';
+    }
+
+    const TECHNOLOGY_KEYWORDS = [
+      'artificial intelligence','machine learning','automation','cloud','saas','data analytics','big data','blockchain','iot','internet of things','cybersecurity','crm','erp','robotics','devops','api','microservices','business intelligence','rpa','virtual reality','augmented reality','digital twin','5g','edge computing','data science'
+    ];
+
+    function extractTechnologies(text){
+      const lower = text.toLowerCase();
+      const found = new Set();
+      TECHNOLOGY_KEYWORDS.forEach(keyword => {
+        if(lower.includes(keyword)){
+          const words = keyword.split(' ').map(w => w.length > 2 ? w[0].toUpperCase()+w.slice(1) : w.toUpperCase());
+          found.add(words.join(' '));
+        }
+      });
+      if(found.size === 0) return '';
+      return Array.from(found).slice(0,7).join('; ');
+    }
+
+    function buildCategoryName(company, main, industry){
+      if(company && industry){
+        return `${company} | ${industry} Solutions`;
+      }
+      if(company && main){
+        return `${company} | ${main}`;
+      }
+      return main || industry || '';
+    }
+
+    function detectBusinessModel(text){
+      const lower = text.toLowerCase();
+      const b2b = ['business','enterprise','corporate','organizations','companies','teams','b2b'];
+      const b2c = ['consumer','customer','individual','b2c','residential','personal'];
+      const b2bScore = b2b.reduce((acc, term) => acc + (lower.includes(term) ? 1 : 0), 0);
+      const b2cScore = b2c.reduce((acc, term) => acc + (lower.includes(term) ? 1 : 0), 0);
+      if(b2bScore && b2cScore) return 'B2B & B2C — Serves Both Segments';
+      if(b2bScore) return 'B2B — Serves Business Clients';
+      if(b2cScore) return 'B2C — Serves Consumers';
+      return 'B2B — Serves Business Clients';
+    }
+
+    function determineSector(industry){
+      if(!industry) return 'Business Services';
+      const mapping = [
+        { match: 'Information Technology', result: 'Information Technology' },
+        { match: 'Healthcare', result: 'Healthcare' },
+        { match: 'Financial', result: 'Finance' },
+        { match: 'Manufacturing', result: 'Industrial' },
+        { match: 'Retail', result: 'Retail & Commerce' },
+        { match: 'Education', result: 'Education' },
+        { match: 'Marketing', result: 'Marketing & Advertising' },
+        { match: 'Human Resources', result: 'Human Resources' },
+        { match: 'Energy', result: 'Energy & Utilities' },
+        { match: 'Logistics', result: 'Logistics & Transportation' },
+        { match: 'Government', result: 'Public Sector' },
+        { match: 'Real Estate', result: 'Real Estate & Construction' },
+        { match: 'Hospitality', result: 'Hospitality & Travel' }
+      ];
+      for(const item of mapping){
+        if(industry.includes(item.match)) return item.result;
+      }
+      return 'Business Services';
+    }
+
+    function determineServiceGiven(type, industry){
+      if(type && industry){
+        return `${type} For ${industry}`;
+      }
+      if(industry){
+        return `Solutions For ${industry}`;
+      }
+      return 'Solutions For Target Industry';
+    }
+
+    function determineProductStatus(text){
+      const lower = text.toLowerCase();
+      if(lower.includes('proprietary platform') || lower.includes('our platform') || lower.includes('product suite')) return 'Own Product Developer';
+      if(lower.includes('partner program') || lower.includes('authorized partner')) return 'Strategic Partner';
+      if(lower.includes('reseller') || lower.includes('authorized reseller')) return 'Authorized Seller / Reseller';
+      return 'Service Provider';
+    }
+
+    function composeBestFit(main, offerings, industry){
+      const pieces = [];
+      if(main) pieces.push(main);
+      if(offerings && offerings !== main) pieces.push(offerings);
+      if(industry) pieces.push(`Serving ${industry}`);
+      return pieces.join(' — ');
+    }
+
+    function extractEmailsFromText(text){
+      const regex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+      const matches = text.match(regex) || [];
+      const unique = Array.from(new Set(matches.map(email => email.trim())));
+      return unique.slice(0, 8).join('; ');
+    }
+
+    function detectParentCompany(text){
+      const lower = text.toLowerCase();
+      const match = lower.match(/part of ([^.\n]+)/);
+      if(match) return toSmartTitleCase(match[1]);
+      const subsidiary = lower.match(/subsidiary of ([^.\n]+)/);
+      if(subsidiary) return toSmartTitleCase(subsidiary[1]);
+      if(lower.includes('independent')) return 'Independent Company';
+      if(lower.includes('non-profit') || lower.includes('nonprofit')) return 'Non-Profit Organization';
+      return '';
+    }
+
+    function determineCompanyType(companyName, text){
+      const lower = text.toLowerCase();
+      if(/inc\.?/i.test(companyName)) return 'Corporation';
+      if(/llc/i.test(companyName)) return 'Limited Liability Company';
+      if(/ltd/i.test(companyName)) return 'Private Limited Company';
+      if(/gmbh/i.test(companyName)) return 'GmbH';
+      if(lower.includes('government agency') || lower.includes('department')) return 'Government Agency';
+      if(lower.includes('association') || lower.includes('society')) return 'Association';
+      if(lower.includes('foundation')) return 'Foundation';
+      return 'Private Company';
+    }
+
+    function determineTechOrNot(text){
+      const lower = text.toLowerCase();
+      const techKeywords = ['software','technology','digital','platform','data','cloud','automation','ai','machine learning'];
+      const score = techKeywords.reduce((acc, word) => acc + (lower.includes(word) ? 1 : 0), 0);
+      return score > 1 ? 'Technology & Solution Provider' : 'Business Service Provider';
+    }
+
+    function buildConclusion(name, type, main, sector){
+      const pieces = [];
+      if(name) pieces.push(name);
+      if(type) pieces.push(`is a ${type.toLowerCase()}`);
+      if(sector) pieces.push(`operating within the ${sector.toLowerCase()} sector`);
+      if(main) pieces.push(`focused on ${main.toLowerCase()}`);
+      return pieces.length ? toSmartTitleCase(pieces.join(' ')) : '';
+    }
+
+    async function scanAdditionalPages(baseUrl, doc){
+      const urls = new Set();
+      const anchorSelectors = 'a[href*="contact"], a[href*="support"], a[href*="help"], a[href*="privacy"], a[href*="policy"]';
+      const anchors = Array.from(doc.querySelectorAll(anchorSelectors));
+      anchors.slice(0,4).forEach(a => {
+        const href = a.getAttribute('href');
+        if(!href) return;
+        try{
+          const absolute = new URL(href, baseUrl).href;
+          urls.add(absolute);
+        }catch(err){/* ignore */}
+      });
+      const snippets = [];
+      for(const url of Array.from(urls).slice(0,3)){
+        try{
+          const { html } = await fetchWithFallback(url);
+          if(html) snippets.push(html);
+        }catch(err){/* ignore */}
+      }
+      return snippets.join('\n');
+    }
+
+    async function analyzeCompany(url){
+      resetProgress();
+      analyzeBtn.disabled = true;
+      statusLine.innerHTML = '<span class="loader" aria-hidden="true"></span><span class="status-text">Analysing website…</span>';
+      const statusSpan = statusLine.querySelector('.status-text');
+
+      updateProgress('fetch','active','Requesting content…');
+      const { html, usedProxy } = await fetchWithFallback(url);
+      if(!html){
+        updateProgress('fetch','error','Unable to download website content. Manual input required.');
+        statusLine.innerHTML = '<span class="status-text">Could not access the website (CORS or network issue). Please populate the table manually.</span>';
+        analyzeBtn.disabled = false;
+        return;
+      }
+      updateProgress('fetch','done', usedProxy ? 'Content retrieved via fallback proxy.' : 'Website fetched successfully.');
+
+      updateProgress('parse','active','Parsing web copy and structured data…');
+      const doc = createDocFromHTML(html);
+      const text = extractText(doc);
+      updateProgress('parse','done','Signals identified from titles, descriptions, and headings.');
+
+      updateProgress('emails','active','Scanning additional pages for contact details…');
+      let extraHtml = '';
+      try{
+        extraHtml = await scanAdditionalPages(url, doc);
+        updateProgress('emails','done', extraHtml ? 'Email addresses captured from related pages.' : 'No dedicated contact page detected — edit manually if needed.');
+      }catch(err){
+        updateProgress('emails','error','Contact scanning failed — update manually if required.');
+      }
+
+      const combinedText = `${text}\n${extraHtml}`;
+
+      updateProgress('classify','active','Running classification heuristics…');
+      const companyName = extractCompanyName(doc, new URL(url));
+      const mainBusiness = extractMainBusiness(doc, text);
+      const address = extractAddress(doc, text);
+      const industry = detectIndustry(combinedText);
+      const offerings = takeFirstNonEmpty(mainBusiness, doc.querySelector('meta[name="keywords"]')?.content || '');
+      const type = determineType(combinedText);
+      const supplyClassification = classifySupply(combinedText);
+      const magazine = determineMagazine(type, industry);
+      const linkedinLink = findLinkedIn(html, doc);
+      const aiCategory = determineAICategory(combinedText);
+      const technology = extractTechnologies(combinedText);
+      const categoryName = buildCategoryName(companyName, mainBusiness, industry);
+      const businessModel = detectBusinessModel(combinedText);
+      const sector = determineSector(industry);
+      const serviceGiven = determineServiceGiven(type, industry);
+      const productStatus = determineProductStatus(combinedText);
+      const bestFit = composeBestFit(mainBusiness, offerings, industry);
+      const emailAddresses = extractEmailsFromText(combinedText);
+      const parentCompany = detectParentCompany(combinedText);
+      const companyType = determineCompanyType(companyName, combinedText);
+      const techOrNot = determineTechOrNot(combinedText);
+      const conclusion = buildConclusion(companyName, type, mainBusiness, sector);
+      updateProgress('classify','done','Business model and positioning derived.');
+
+      updateProgress('finalize','active','Preparing editable summary…');
+      setFieldValue('companyName', companyName);
+      setFieldValue('mainBusiness', mainBusiness);
+      setFieldValue('address', address);
+      setFieldValue('industry', industry);
+      setFieldValue('offerings', offerings);
+      setFieldValue('type', type);
+      setFieldValue('supplyClassification', supplyClassification);
+      setFieldValue('magazine', magazine);
+      const linkedInValue = linkedinLink ? `Profile: ${linkedinLink}` : 'LinkedIn Profile Not Detected — Update Manually';
+      setFieldValue('linkedinProfile', linkedInValue);
+      setFieldValue('aiCategory', aiCategory);
+      setFieldValue('technology', technology);
+      setFieldValue('categoryName', categoryName);
+      setFieldValue('businessModel', businessModel);
+      setFieldValue('sector', sector);
+      setFieldValue('serviceGiven', serviceGiven);
+      setFieldValue('productStatus', productStatus);
+      setFieldValue('bestFit', bestFit);
+      setFieldValue('emailAddresses', emailAddresses || 'Email Not Found — Update Manually');
+      setFieldValue('parentCompany', parentCompany || 'Independent Company');
+      setFieldValue('companyType', companyType);
+      setFieldValue('techOrNot', techOrNot);
+      setFieldValue('conclusion', conclusion || `${toSmartTitleCase(companyName || 'The Company')} Delivers ${toSmartTitleCase(type || 'Business Services')}.`);
+      updateProgress('finalize','done','Results are ready — review and edit as needed.');
+
+      analyzeBtn.disabled = false;
+      statusLine.innerHTML = `<span class="status-text">Analysis complete. Review, adjust if necessary, then export your findings.</span>${usedProxy ? '<span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Content retrieved via proxy because the site blocks cross-origin requests.</span>' : ''}`;
+    }
+
+    analyzeBtn.addEventListener('click', () => {
+      const normalized = normalizeUrl(urlInput.value);
+      if(!normalized){
+        statusText.textContent = 'Please enter a valid website URL (e.g., https://company.com).';
+        return;
+      }
+      analyzeCompany(normalized);
+    });
+
+    urlInput.addEventListener('keydown', evt => {
+      if(evt.key === 'Enter'){
+        evt.preventDefault();
+        analyzeBtn.click();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      urlInput.value = '';
+      resetProgress();
+      FIELDS.forEach(field => setFieldValue(field.key, field.titleCase ? 'Awaiting Analysis' : 'Awaiting Analysis'));
+      statusLine.innerHTML = '<span class="status-text">Awaiting input…</span>';
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const lines = FIELDS.map(field => `${field.label}: ${dataState[field.key] || ''}`);
+      const blobText = lines.join('\n');
+      try{
+        await navigator.clipboard.writeText(blobText);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy Full Summary', 1600);
+      }catch(err){
+        copyBtn.textContent = 'Clipboard Blocked';
+        setTimeout(() => copyBtn.textContent = 'Copy Full Summary', 2000);
+      }
+    });
+
+    function toCSV(text){
+      const escaped = text.replace(/"/g,'""');
+      return `"${escaped}"`;
+    }
+
+    csvBtn.addEventListener('click', () => {
+      const header = 'Analysis Point,Value';
+      const rows = FIELDS.map(field => `${toCSV(field.label)},${toCSV(dataState[field.key] || '')}`);
+      const csvContent = [header, ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = 'company-analysis.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
