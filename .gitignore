@@ -1,0 +1,11 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs and caches
+*.log
+*.cache
