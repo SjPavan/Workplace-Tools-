@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+htmlcov/
+.coverage*
+
+# FastAPI
+*.db
+
+# VSCode
+.vscode/
+
+# Misc
+.DS_Store
