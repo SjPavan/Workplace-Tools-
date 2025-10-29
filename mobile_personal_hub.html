@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>Mobile Personal Hub</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --surface: #ffffff;
+            --surface-alt: #f3f4f6;
+            --surface-dark: #1f2933;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent: #2563eb;
+            --accent-soft: rgba(37, 99, 235, 0.1);
+            --danger: #dc2626;
+            --success: #059669;
+            --warning: #d97706;
+            --muted: #9ca3af;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface-alt);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .app-shell {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .app-header {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: sticky;
+            top: 12px;
+            z-index: 10;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface-alt);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--warning);
+            transition: background 0.2s ease;
+        }
+
+        .status-dot.online {
+            background: var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--warning);
+        }
+
+        .status-dot.conflict {
+            background: var(--danger);
+        }
+
+        .sync-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .suggestion-feed, .view-card, .conflict-panel, .test-console, .sync-journal {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .suggestion-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--accent-soft);
+        }
+
+        .suggestion-card h3 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .suggestion-card p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .suggestion-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .button.primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.24);
+        }
+
+        .button.secondary {
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .button.danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .button.small {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .tab-bar {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .tab-button {
+            border: none;
+            border-radius: 14px;
+            padding: 10px 8px;
+            background: var(--surface);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        }
+
+        .tab-button.active {
+            background: var(--accent);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .view-card {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .view-card.active {
+            display: flex;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"], input[type="time"], input[type="date"], select, textarea {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--surface-alt);
+        }
+
+        textarea {
+            min-height: 72px;
+            resize: vertical;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .item-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fff;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .item-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .tag.synced {
+            background: rgba(5, 150, 105, 0.12);
+            color: var(--success);
+        }
+
+        .tag.pending {
+            background: rgba(37, 99, 235, 0.12);
+            color: var(--accent);
+        }
+
+        .tag.conflict {
+            background: rgba(220, 38, 38, 0.12);
+            color: var(--danger);
+        }
+
+        .tag.local-only {
+            background: rgba(217, 119, 6, 0.12);
+            color: var(--warning);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            padding: 24px 0;
+        }
+
+        .conflict-panel {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .conflict-panel.active {
+            display: flex;
+        }
+
+        .conflict-card {
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(254, 226, 226, 0.6);
+        }
+
+        .conflict-card h3 {
+            margin: 0;
+            font-size: 15px;
+            color: var(--danger);
+        }
+
+        .conflict-details {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: grid;
+            gap: 6px;
+        }
+
+        .conflict-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sync-journal {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sync-entry {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: var(--surface-alt);
+        }
+
+        .test-console {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .test-log {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .test-result {
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 12px;
+            background: var(--surface-alt);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .test-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .test-result.pass {
+            border-left: 4px solid var(--success);
+        }
+
+        .test-result.fail {
+            border-left: 4px solid var(--danger);
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --surface: #101623;
+                --surface-alt: #111827;
+                --text-primary: #f8fafc;
+                --text-secondary: #cbd5f5;
+                --border: rgba(148, 163, 184, 0.24);
+            }
+
+            body {
+                background: #0b1220;
+            }
+
+            .button.secondary {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--text-secondary);
+            }
+
+            .item-card, .suggestion-card {
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            .test-result {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            input[type="text"], input[type="time"], input[type="date"], select, textarea {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--text-primary);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-header" aria-live="polite">
+            <div class="header-row">
+                <span class="status-pill">
+                    <span class="status-dot offline" id="connectionDot" role="presentation"></span>
+                    <span id="connectionLabel">Checking connectivity…</span>
+                </span>
+                <span class="status-pill" id="queueLabel">Queue: 0</span>
+            </div>
+            <div class="sync-meta">
+                <span id="lastSyncLabel">Last sync • never</span>
+                <span id="conflictCountLabel">Conflicts • 0</span>
+            </div>
+        </header>
+
+        <section class="suggestion-feed" aria-label="Proactive suggestions">
+            <div class="section-title">
+                <span>Today’s proactive suggestions</span>
+                <button class="button secondary small" id="refreshSuggestionsBtn" type="button">Refresh</button>
+            </div>
+            <div class="suggestions" id="suggestionsPanel">
+                <div class="empty-state" id="suggestionEmpty">All caught up — no suggestions right now.</div>
+            </div>
+        </section>
+
+        <nav class="tab-bar" aria-label="Mobile personal hub navigation">
+            <button class="tab-button active" data-view="planner" type="button">Planner</button>
+            <button class="tab-button" data-view="routines" type="button">Routines</button>
+            <button class="tab-button" data-view="tasks" type="button">Tasks</button>
+            <button class="tab-button" data-view="habits" type="button">Habits</button>
+            <button class="tab-button" data-view="mood" type="button">Mood</button>
+        </nav>
+
+        <main>
+            <section class="view-card active" id="view-planner" aria-labelledby="planner">
+                <div class="section-title"><span>Daily planner</span></div>
+                <form id="plannerForm">
+                    <div class="field">
+                        <label for="plannerTitle">Title</label>
+                        <input id="plannerTitle" name="title" type="text" placeholder="Team sync, focus block…" required>
+                    </div>
+                    <div class="field">
+                        <label for="plannerTime">Time</label>
+                        <input id="plannerTime" name="time" type="time" required>
+                    </div>
+                    <div class="field">
+                        <label for="plannerNotes">Notes</label>
+                        <textarea id="plannerNotes" name="notes" placeholder="Context, goals or attachments"></textarea>
+                    </div>
+                    <button class="button primary" type="submit">Schedule block</button>
+                </form>
+                <ul class="item-list" id="plannerList">
+                    <li class="empty-state" id="plannerEmpty">No plans yet — design your day.</li>
+                </ul>
+            </section>
+
+            <section class="view-card" id="view-routines" aria-labelledby="routines">
+                <div class="section-title"><span>Routines</span></div>
+                <form id="routineForm">
+                    <div class="field">
+                        <label for="routineName">Routine name</label>
+                        <input id="routineName" name="name" type="text" placeholder="Morning activation" required>
+                    </div>
+                    <div class="field">
+                        <label for="routineCadence">Cadence</label>
+                        <select id="routineCadence" name="cadence" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="weekend">Weekends</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="routineFocus">Focus area</label>
+                        <input id="routineFocus" name="focus" type="text" placeholder="Energy, recovery, family…">
+                    </div>
+                    <button class="button primary" type="submit">Save routine</button>
+                </form>
+                <ul class="item-list" id="routineList">
+                    <li class="empty-state" id="routineEmpty">Capture your first routine to automate momentum.</li>
+                </ul>
+            </section>
+
+            <section class="view-card" id="view-tasks" aria-labelledby="tasks">
+                <div class="section-title"><span>Tasks</span></div>
+                <form id="taskForm">
+                    <div class="field">
+                        <label for="taskTitle">Task</label>
+                        <input id="taskTitle" name="title" type="text" placeholder="Ship product update" required>
+                    </div>
+                    <div class="field">
+                        <label for="taskDue">Due date</label>
+                        <input id="taskDue" name="dueDate" type="date">
+                    </div>
+                    <div class="field">
+                        <label for="taskPriority">Priority</label>
+                        <select id="taskPriority" name="priority">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <button class="button primary" type="submit">Add task</button>
+                </form>
+                <ul class="item-list" id="taskList">
+                    <li class="empty-state" id="taskEmpty">Create tasks to maintain momentum.</li>
+                </ul>
+            </section>
+
+            <section class="view-card" id="view-habits" aria-labelledby="habits">
+                <div class="section-title"><span>Habit check-ins</span></div>
+                <form id="habitForm">
+                    <div class="field">
+                        <label for="habitName">Habit name</label>
+                        <input id="habitName" name="name" type="text" placeholder="Hydrate every hour" required>
+                    </div>
+                    <div class="field">
+                        <label for="habitFrequency">Frequency</label>
+                        <select id="habitFrequency" name="frequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <button class="button primary" type="submit">Create habit</button>
+                </form>
+                <ul class="item-list" id="habitList">
+                    <li class="empty-state" id="habitEmpty">Define sustaining habits and check-in consistently.</li>
+                </ul>
+            </section>
+
+            <section class="view-card" id="view-mood" aria-labelledby="mood">
+                <div class="section-title"><span>Mood tracking</span></div>
+                <form id="moodForm">
+                    <div class="field">
+                        <label for="moodDate">Date</label>
+                        <input id="moodDate" name="date" type="date" required>
+                    </div>
+                    <div class="field">
+                        <label for="moodValue">Current mood</label>
+                        <select id="moodValue" name="mood" required>
+                            <option value="energised">Energised</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="stretched">Stretched</option>
+                            <option value="drained">Drained</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="moodNotes">Notes</label>
+                        <textarea id="moodNotes" name="notes" placeholder="Triggers, wins, reflections"></textarea>
+                    </div>
+                    <button class="button primary" type="submit">Log mood</button>
+                </form>
+                <ul class="item-list" id="moodList">
+                    <li class="empty-state" id="moodEmpty">Track how you’re feeling to unlock insights.</li>
+                </ul>
+            </section>
+        </main>
+
+        <section class="conflict-panel" id="conflictPanel" aria-live="assertive">
+            <div class="section-title"><span>Sync conflicts</span></div>
+            <div class="empty-state" id="conflictEmpty">No conflicts detected.</div>
+        </section>
+
+        <section class="sync-journal" id="syncJournal">
+            <div class="section-title"><span>Background sync activity</span></div>
+            <div class="empty-state" id="syncLogEmpty">No sync events yet.</div>
+        </section>
+
+        <section class="test-console" aria-label="Instrumentation tests">
+            <div class="section-title">
+                <span>Instrumentation coverage</span>
+                <button class="button secondary small" id="runTestsBtn" type="button">Run tests</button>
+            </div>
+            <div class="muted">CRUD flows and sync conflict resolution are validated through automated instrumentation.</div>
+            <div class="test-log" id="testLog"></div>
+        </section>
+    </div>
+
+    <script>
+        const STORAGE_KEYS = {
+            state: 'MH_STATE_V1',
+            queue: 'MH_SYNC_QUEUE_V1',
+            conflicts: 'MH_CONFLICTS_V1',
+            syncLog: 'MH_SYNC_LOG_V1',
+            suggestionMeta: 'MH_SUGGESTION_META_V1',
+            remote: 'MH_REMOTE_DATA_V1'
+        };
+
+        const defaultState = () => ({
+            dailyPlanner: [],
+            routines: [],
+            tasks: [],
+            habits: [],
+            moods: []
+        });
+
+        const AppState = {
+            view: 'planner',
+            state: loadFromStorage(STORAGE_KEYS.state, defaultState()),
+            conflicts: loadFromStorage(STORAGE_KEYS.conflicts, []),
+            syncLog: loadFromStorage(STORAGE_KEYS.syncLog, []),
+            suggestionMeta: loadFromStorage(STORAGE_KEYS.suggestionMeta, {}),
+            lastSync: null,
+            get hasConflicts() {
+                return this.conflicts.length > 0;
+            }
+        };
+
+        function loadFromStorage(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return fallback;
+                return JSON.parse(raw);
+            } catch (error) {
+                console.error('Failed to parse storage', key, error);
+                return fallback;
+            }
+        }
+
+        function saveToStorage(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (error) {
+                console.error('Failed to persist storage', key, error);
+            }
+        }
+
+        function deepClone(value) {
+            return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+        }
+
+        function createId() {
+            if (crypto?.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'id-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+        }
+
+        const RemoteStore = (() => {
+            const initial = () => ({
+                dailyPlanner: {},
+                routines: {},
+                tasks: {},
+                habits: {},
+                moods: {}
+            });
+
+            let cache = null;
+
+            function ensureCache() {
+                if (cache) return cache;
+                const stored = loadFromStorage(STORAGE_KEYS.remote, null);
+                cache = stored || initial();
+                if (!stored) {
+                    saveToStorage(STORAGE_KEYS.remote, cache);
+                }
+                return cache;
+            }
+
+            function save(data) {
+                cache = data;
+                saveToStorage(STORAGE_KEYS.remote, cache);
+            }
+
+            function load() {
+                return deepClone(ensureCache());
+            }
+
+            function snapshot() {
+                return deepClone(ensureCache());
+            }
+
+            function restore(snapshot) {
+                save(snapshot || initial());
+            }
+
+            function reset() {
+                save(initial());
+            }
+
+            return { load, save, snapshot, restore, reset };
+        })();
+
+        const FakeRemoteAPI = {
+            async apply(operation) {
+                const latency = 350 + Math.random() * 550;
+                await new Promise(resolve => setTimeout(resolve, latency));
+                const remote = RemoteStore.load();
+                const bucket = remote[operation.entity] || {};
+
+                if (operation.type === 'delete') {
+                    delete bucket[operation.payload.id];
+                    remote[operation.entity] = bucket;
+                    RemoteStore.save(remote);
+                    return { status: 'ok', record: null };
+                }
+
+                const existing = bucket[operation.payload.id];
+                if (existing && existing.updatedAt && existing.updatedAt > operation.payload.updatedAt) {
+                    return { status: 'conflict', remote: existing };
+                }
+
+                const record = {
+                    ...operation.payload,
+                    syncedAt: Date.now(),
+                    remoteVersion: Date.now()
+                };
+                bucket[operation.payload.id] = record;
+                remote[operation.entity] = bucket;
+                RemoteStore.save(remote);
+                return { status: 'ok', record };
+            },
+            forcePut(entity, record) {
+                const remote = RemoteStore.load();
+                remote[entity] = remote[entity] || {};
+                remote[entity][record.id] = { ...record };
+                RemoteStore.save(remote);
+            },
+            forceDelete(entity, id) {
+                const remote = RemoteStore.load();
+                if (remote[entity]) {
+                    delete remote[entity][id];
+                    RemoteStore.save(remote);
+                }
+            },
+            snapshot() {
+                return RemoteStore.snapshot();
+            },
+            restore(snapshot) {
+                RemoteStore.restore(snapshot);
+            },
+            reset() {
+                RemoteStore.reset();
+            }
+        };
+
+        const SyncManager = {
+            queue: loadFromStorage(STORAGE_KEYS.queue, []),
+            forceOnline: false,
+            processing: false,
+
+            isOnline() {
+                return this.forceOnline || navigator.onLine;
+            },
+
+            enqueue(entity, type, payload) {
+                const operation = {
+                    id: createId(),
+                    entity,
+                    type,
+                    payload,
+                    createdAt: Date.now()
+                };
+                this.queue.push(operation);
+                saveToStorage(STORAGE_KEYS.queue, this.queue);
+                logSyncEvent('queued', `${capitalize(entity)} queued for ${type}`);
+                updateQueueLabel();
+                this.schedule();
+                return operation;
+            },
+
+            schedule() {
+                if (!this.isOnline()) return;
+                this.processAll();
+            },
+
+            async processAll() {
+                if (this.processing) return;
+                if (!this.isOnline()) return;
+                this.processing = true;
+                try {
+                    while (this.queue.length && this.isOnline()) {
+                        const operation = this.queue.shift();
+                        saveToStorage(STORAGE_KEYS.queue, this.queue);
+                        const result = await FakeRemoteAPI.apply(operation);
+                        if (result.status === 'ok') {
+                            onSyncSuccess(operation, result.record);
+                        } else if (result.status === 'conflict') {
+                            onSyncConflict(operation, result.remote);
+                        }
+                        updateQueueLabel();
+                    }
+                } catch (error) {
+                    console.error('Sync error', error);
+                } finally {
+                    this.processing = false;
+                    saveToStorage(STORAGE_KEYS.queue, this.queue);
+                }
+            },
+
+            async flush() {
+                const previousForce = this.forceOnline;
+                this.forceOnline = true;
+                await this.processAll();
+                this.forceOnline = previousForce;
+            }
+        };
+
+        function onSyncSuccess(operation, remoteRecord) {
+            AppState.lastSync = Date.now();
+            const entityList = AppState.state[operation.entity];
+            if (operation.type === 'delete') {
+                logSyncEvent('synced', `${capitalize(operation.entity)} deletion synced`);
+                saveState();
+                updateLastSyncLabel();
+                renderAll();
+                return;
+            }
+            const index = entityList.findIndex(item => item.id === operation.payload.id);
+            if (index !== -1) {
+                entityList[index] = {
+                    ...entityList[index],
+                    ...remoteRecord,
+                    syncStatus: 'synced'
+                };
+            }
+            logSyncEvent('synced', `${capitalize(operation.entity)} synced`);
+            saveState();
+            updateLastSyncLabel();
+            renderAll();
+        }
+
+        function onSyncConflict(operation, remoteRecord) {
+            const conflict = {
+                id: createId(),
+                entity: operation.entity,
+                local: operation.payload,
+                remote: remoteRecord,
+                createdAt: Date.now(),
+                status: 'pending'
+            };
+            AppState.conflicts.push(conflict);
+            saveToStorage(STORAGE_KEYS.conflicts, AppState.conflicts);
+            const entityList = AppState.state[operation.entity];
+            const index = entityList.findIndex(item => item.id === operation.payload.id);
+            if (index !== -1) {
+                entityList[index].syncStatus = 'conflict';
+            }
+            logSyncEvent('conflict', `${capitalize(operation.entity)} conflict detected`);
+            saveState();
+            renderConflicts();
+            renderAll();
+        }
+
+        function capitalize(value) {
+            if (!value) return '';
+            return value.charAt(0).toUpperCase() + value.slice(1);
+        }
+
+        function formatSyncStatus(status) {
+            const display = (status || 'local-only').replace(/-/g, ' ');
+            return display.replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function saveState() {
+            saveToStorage(STORAGE_KEYS.state, AppState.state);
+        }
+
+        function updateQueueLabel() {
+            const label = document.getElementById('queueLabel');
+            label.textContent = `Queue: ${SyncManager.queue.length}`;
+        }
+
+        function updateConflictLabel() {
+            const label = document.getElementById('conflictCountLabel');
+            label.textContent = `Conflicts • ${AppState.conflicts.length}`;
+            const dot = document.getElementById('connectionDot');
+            if (AppState.conflicts.length > 0) {
+                dot.classList.add('conflict');
+            } else {
+                dot.classList.remove('conflict');
+            }
+        }
+
+        function updateLastSyncLabel() {
+            const label = document.getElementById('lastSyncLabel');
+            if (!AppState.lastSync) {
+                label.textContent = 'Last sync • never';
+                return;
+            }
+            const time = new Date(AppState.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            label.textContent = `Last sync • ${time}`;
+        }
+
+        function updateConnectionStatus() {
+            const dot = document.getElementById('connectionDot');
+            const label = document.getElementById('connectionLabel');
+            if (navigator.onLine) {
+                dot.classList.add('online');
+                dot.classList.remove('offline');
+                label.textContent = 'Online — syncing in background';
+            } else {
+                dot.classList.add('offline');
+                dot.classList.remove('online');
+                label.textContent = 'Offline — changes stored locally';
+            }
+        }
+
+        const AppActions = {
+            addPlanner(entry) {
+                const item = {
+                    id: createId(),
+                    title: entry.title,
+                    time: entry.time,
+                    notes: entry.notes || '',
+                    status: 'scheduled',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                };
+                AppState.state.dailyPlanner.push(item);
+                saveState();
+                SyncManager.enqueue('dailyPlanner', 'upsert', item);
+                renderPlanner();
+                refreshSuggestions();
+                return item;
+            },
+            updatePlanner(id, updates) {
+                const item = AppState.state.dailyPlanner.find(v => v.id === id);
+                if (!item) return null;
+                Object.assign(item, updates, {
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                });
+                saveState();
+                SyncManager.enqueue('dailyPlanner', 'upsert', item);
+                renderPlanner();
+                return item;
+            },
+            deletePlanner(id) {
+                const index = AppState.state.dailyPlanner.findIndex(v => v.id === id);
+                if (index === -1) return;
+                const [removed] = AppState.state.dailyPlanner.splice(index, 1);
+                saveState();
+                SyncManager.enqueue('dailyPlanner', 'delete', removed);
+                renderPlanner();
+                refreshSuggestions();
+            },
+            addRoutine(entry) {
+                const item = {
+                    id: createId(),
+                    name: entry.name,
+                    cadence: entry.cadence,
+                    focus: entry.focus || '',
+                    status: 'planned',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                };
+                AppState.state.routines.push(item);
+                saveState();
+                SyncManager.enqueue('routines', 'upsert', item);
+                renderRoutines();
+                refreshSuggestions();
+                return item;
+            },
+            updateRoutine(id, updates) {
+                const item = AppState.state.routines.find(v => v.id === id);
+                if (!item) return null;
+                Object.assign(item, updates, {
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                });
+                saveState();
+                SyncManager.enqueue('routines', 'upsert', item);
+                renderRoutines();
+                return item;
+            },
+            deleteRoutine(id) {
+                const index = AppState.state.routines.findIndex(v => v.id === id);
+                if (index === -1) return;
+                const [removed] = AppState.state.routines.splice(index, 1);
+                saveState();
+                SyncManager.enqueue('routines', 'delete', removed);
+                renderRoutines();
+                refreshSuggestions();
+            },
+            addTask(entry) {
+                const item = {
+                    id: createId(),
+                    title: entry.title,
+                    dueDate: entry.dueDate || null,
+                    priority: entry.priority || 'normal',
+                    status: 'pending',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                };
+                AppState.state.tasks.push(item);
+                saveState();
+                SyncManager.enqueue('tasks', 'upsert', item);
+                renderTasks();
+                refreshSuggestions();
+                return item;
+            },
+            toggleTask(id) {
+                const item = AppState.state.tasks.find(v => v.id === id);
+                if (!item) return null;
+                item.status = item.status === 'completed' ? 'pending' : 'completed';
+                item.updatedAt = Date.now();
+                item.syncStatus = 'pending';
+                saveState();
+                SyncManager.enqueue('tasks', 'upsert', item);
+                renderTasks();
+                refreshSuggestions();
+                return item;
+            },
+            updateTask(id, updates) {
+                const item = AppState.state.tasks.find(v => v.id === id);
+                if (!item) return null;
+                Object.assign(item, updates, {
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                });
+                saveState();
+                SyncManager.enqueue('tasks', 'upsert', item);
+                renderTasks();
+                refreshSuggestions();
+                return item;
+            },
+            deleteTask(id) {
+                const index = AppState.state.tasks.findIndex(v => v.id === id);
+                if (index === -1) return;
+                const [removed] = AppState.state.tasks.splice(index, 1);
+                saveState();
+                SyncManager.enqueue('tasks', 'delete', removed);
+                renderTasks();
+                refreshSuggestions();
+            },
+            addHabit(entry) {
+                const item = {
+                    id: createId(),
+                    name: entry.name,
+                    frequency: entry.frequency || 'daily',
+                    streak: 0,
+                    lastCheckIn: null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                };
+                AppState.state.habits.push(item);
+                saveState();
+                SyncManager.enqueue('habits', 'upsert', item);
+                renderHabits();
+                refreshSuggestions();
+                return item;
+            },
+            checkInHabit(id) {
+                const item = AppState.state.habits.find(v => v.id === id);
+                if (!item) return null;
+                const today = new Date().toISOString().slice(0, 10);
+                if (item.lastCheckIn !== today) {
+                    item.streak += 1;
+                    item.lastCheckIn = today;
+                }
+                item.updatedAt = Date.now();
+                item.syncStatus = 'pending';
+                saveState();
+                SyncManager.enqueue('habits', 'upsert', item);
+                renderHabits();
+                refreshSuggestions();
+                return item;
+            },
+            deleteHabit(id) {
+                const index = AppState.state.habits.findIndex(v => v.id === id);
+                if (index === -1) return;
+                const [removed] = AppState.state.habits.splice(index, 1);
+                saveState();
+                SyncManager.enqueue('habits', 'delete', removed);
+                renderHabits();
+                refreshSuggestions();
+            },
+            logMood(entry) {
+                const item = {
+                    id: createId(),
+                    date: entry.date,
+                    mood: entry.mood,
+                    notes: entry.notes || '',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                };
+                AppState.state.moods.push(item);
+                saveState();
+                SyncManager.enqueue('moods', 'upsert', item);
+                renderMoods();
+                refreshSuggestions();
+                return item;
+            },
+            updateMood(id, updates) {
+                const item = AppState.state.moods.find(v => v.id === id);
+                if (!item) return null;
+                Object.assign(item, updates, {
+                    updatedAt: Date.now(),
+                    syncStatus: 'pending'
+                });
+                saveState();
+                SyncManager.enqueue('moods', 'upsert', item);
+                renderMoods();
+                return item;
+            },
+            deleteMood(id) {
+                const index = AppState.state.moods.findIndex(v => v.id === id);
+                if (index === -1) return;
+                const [removed] = AppState.state.moods.splice(index, 1);
+                saveState();
+                SyncManager.enqueue('moods', 'delete', removed);
+                renderMoods();
+                refreshSuggestions();
+            }
+        };
+
+        function renderAll() {
+            renderPlanner();
+            renderRoutines();
+            renderTasks();
+            renderHabits();
+            renderMoods();
+            renderConflicts();
+            renderSyncJournal();
+            updateConflictLabel();
+            refreshSuggestions();
+        }
+
+        function renderPlanner() {
+            const list = document.getElementById('plannerList');
+            list.innerHTML = '';
+            if (!AppState.state.dailyPlanner.length) {
+                document.getElementById('plannerEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('plannerEmpty').style.display = 'none';
+            AppState.state.dailyPlanner
+                .slice()
+                .sort((a, b) => a.time.localeCompare(b.time))
+                .forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item-card';
+                    li.dataset.id = item.id;
+                    const statusClass = item.syncStatus || 'local-only';
+                    const statusLabel = formatSyncStatus(item.syncStatus);
+                    li.innerHTML = `
+                        <div class="item-header">
+                            <div class="item-title">${item.title}</div>
+                            <span class="tag ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>${item.time}</span>
+                            ${item.notes ? `<span>• ${item.notes}</span>` : ''}
+                        </div>
+                        <div class="item-actions">
+                            <button class="button secondary small" data-action="edit">Edit</button>
+                            <button class="button secondary small" data-action="complete">Complete</button>
+                            <button class="button danger small" data-action="delete">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+        }
+
+        function renderRoutines() {
+            const list = document.getElementById('routineList');
+            list.innerHTML = '';
+            if (!AppState.state.routines.length) {
+                document.getElementById('routineEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('routineEmpty').style.display = 'none';
+            AppState.state.routines
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item-card';
+                    li.dataset.id = item.id;
+                    const statusClass = item.syncStatus || 'local-only';
+                    const statusLabel = formatSyncStatus(item.syncStatus);
+                    li.innerHTML = `
+                        <div class="item-header">
+                            <div class="item-title">${item.name}</div>
+                            <span class="tag ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>Cadence: ${capitalize(item.cadence)}</span>
+                            ${item.focus ? `<span>• Focus: ${item.focus}</span>` : ''}
+                            <span>• Status: ${capitalize(item.status)}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="button secondary small" data-action="advance">${item.status === 'planned' ? 'Start' : item.status === 'in-progress' ? 'Complete' : 'Reset'}</button>
+                            <button class="button secondary small" data-action="edit">Edit</button>
+                            <button class="button danger small" data-action="delete">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            if (!AppState.state.tasks.length) {
+                document.getElementById('taskEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('taskEmpty').style.display = 'none';
+            AppState.state.tasks
+                .slice()
+                .sort((a, b) => {
+                    if (a.status === b.status) {
+                        return (a.priority || '').localeCompare(b.priority || '');
+                    }
+                    return a.status === 'pending' ? -1 : 1;
+                })
+                .forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item-card';
+                    li.dataset.id = item.id;
+                    const statusClass = item.syncStatus || 'local-only';
+                    const statusLabel = formatSyncStatus(item.syncStatus);
+                    li.innerHTML = `
+                        <div class="item-header">
+                            <div class="item-title">${item.title}</div>
+                            <span class="tag ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>Status: ${capitalize(item.status)}</span>
+                            ${item.dueDate ? `<span>• Due ${item.dueDate}</span>` : ''}
+                            <span>• Priority: ${capitalize(item.priority)}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="button secondary small" data-action="toggle">${item.status === 'pending' ? 'Mark done' : 'Reopen'}</button>
+                            <button class="button danger small" data-action="delete">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+        }
+
+        function renderHabits() {
+            const list = document.getElementById('habitList');
+            list.innerHTML = '';
+            if (!AppState.state.habits.length) {
+                document.getElementById('habitEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('habitEmpty').style.display = 'none';
+            AppState.state.habits
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item-card';
+                    li.dataset.id = item.id;
+                    const statusClass = item.syncStatus || 'local-only';
+                    const statusLabel = formatSyncStatus(item.syncStatus);
+                    li.innerHTML = `
+                        <div class="item-header">
+                            <div class="item-title">${item.name}</div>
+                            <span class="tag ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>Frequency: ${capitalize(item.frequency)}</span>
+                            <span>• Streak: ${item.streak}</span>
+                            ${item.lastCheckIn ? `<span>• Last check-in ${item.lastCheckIn}</span>` : ''}
+                        </div>
+                        <div class="item-actions">
+                            <button class="button primary small" data-action="checkin">Check-in</button>
+                            <button class="button danger small" data-action="delete">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+        }
+
+        function renderMoods() {
+            const list = document.getElementById('moodList');
+            list.innerHTML = '';
+            if (!AppState.state.moods.length) {
+                document.getElementById('moodEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('moodEmpty').style.display = 'none';
+            AppState.state.moods
+                .slice()
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'item-card';
+                    li.dataset.id = item.id;
+                    const statusClass = item.syncStatus || 'local-only';
+                    const statusLabel = formatSyncStatus(item.syncStatus);
+                    li.innerHTML = `
+                        <div class="item-header">
+                            <div class="item-title">${capitalize(item.mood)}</div>
+                            <span class="tag ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>${item.date}</span>
+                            ${item.notes ? `<span>• ${item.notes}</span>` : ''}
+                        </div>
+                        <div class="item-actions">
+                            <button class="button secondary small" data-action="edit">Edit</button>
+                            <button class="button danger small" data-action="delete">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+        }
+
+        function renderConflicts() {
+            const panel = document.getElementById('conflictPanel');
+            panel.innerHTML = '<div class="section-title"><span>Sync conflicts</span></div>';
+            if (!AppState.conflicts.length) {
+                panel.classList.remove('active');
+                panel.appendChild(createElement('div', { class: 'empty-state', id: 'conflictEmpty', text: 'No conflicts detected.' }));
+                updateConflictLabel();
+                return;
+            }
+            panel.classList.add('active');
+            AppState.conflicts.forEach(conflict => {
+                const card = document.createElement('div');
+                card.className = 'conflict-card';
+                card.dataset.id = conflict.id;
+                card.innerHTML = `
+                    <h3>Conflict in ${capitalize(conflict.entity)}</h3>
+                    <div class="conflict-details">
+                        <div><strong>Local:</strong> ${summariseRecord(conflict.local)}</div>
+                        <div><strong>Remote:</strong> ${summariseRecord(conflict.remote)}</div>
+                    </div>
+                    <div class="conflict-actions">
+                        <button class="button primary small" data-resolution="local">Keep local</button>
+                        <button class="button secondary small" data-resolution="remote">Accept remote</button>
+                    </div>
+                `;
+                panel.appendChild(card);
+            });
+            updateConflictLabel();
+        }
+
+        function renderSyncJournal() {
+            const container = document.getElementById('syncJournal');
+            const empty = document.getElementById('syncLogEmpty');
+            const existing = container.querySelectorAll('.sync-entry');
+            existing.forEach(node => node.remove());
+            if (!AppState.syncLog.length) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            AppState.syncLog.slice(0, 8).forEach(entry => {
+                const node = document.createElement('div');
+                node.className = 'sync-entry';
+                node.innerHTML = `
+                    <span>${entry.message}</span>
+                    <span>${new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                `;
+                container.appendChild(node);
+            });
+        }
+
+        function createElement(tag, { class: className, text, attrs } = {}) {
+            const el = document.createElement(tag);
+            if (className) el.className = className;
+            if (text) el.textContent = text;
+            if (attrs) {
+                Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+            }
+            return el;
+        }
+
+        function summariseRecord(record) {
+            if (!record) return 'No data';
+            const clone = { ...record };
+            delete clone.updatedAt;
+            delete clone.createdAt;
+            delete clone.syncStatus;
+            delete clone.remoteVersion;
+            delete clone.syncedAt;
+            delete clone.id;
+            const summary = Object.entries(clone)
+                .filter(([, value]) => value !== undefined && value !== null && value !== '')
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(', ');
+            return summary || 'No detail';
+        }
+
+        function logSyncEvent(type, message) {
+            AppState.syncLog.unshift({ id: createId(), type, message, timestamp: Date.now() });
+            AppState.syncLog = AppState.syncLog.slice(0, 40);
+            saveToStorage(STORAGE_KEYS.syncLog, AppState.syncLog);
+            renderSyncJournal();
+        }
+
+        function refreshSuggestions() {
+            const panel = document.getElementById('suggestionsPanel');
+            panel.innerHTML = '';
+            const suggestions = buildSuggestions();
+            if (!suggestions.length) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = 'All caught up — no suggestions right now.';
+                panel.appendChild(empty);
+                return;
+            }
+            suggestions.forEach(suggestion => {
+                const card = document.createElement('article');
+                card.className = 'suggestion-card';
+                card.dataset.id = suggestion.id;
+                card.innerHTML = `
+                    <h3>${suggestion.title}</h3>
+                    <p>${suggestion.description}</p>
+                    <div class="suggestion-actions">
+                        <button class="button primary small" data-action="primary">${suggestion.primaryAction.label}</button>
+                        ${suggestion.secondaryAction ? `<button class="button secondary small" data-action="secondary">${suggestion.secondaryAction.label}</button>` : ''}
+                    </div>
+                `;
+                card.querySelector('[data-action="primary"]').addEventListener('click', () => {
+                    suggestion.primaryAction.handler();
+                });
+                if (suggestion.secondaryAction) {
+                    card.querySelector('[data-action="secondary"]').addEventListener('click', () => {
+                        suggestion.secondaryAction.handler();
+                    });
+                }
+                panel.appendChild(card);
+            });
+        }
+
+        function buildSuggestions() {
+            const suggestions = [];
+            const today = new Date().toISOString().slice(0, 10);
+            const alreadyLoggedMood = AppState.state.moods.some(m => m.date === today);
+            if (!alreadyLoggedMood) {
+                suggestions.push({
+                    id: 'suggest-log-mood',
+                    title: 'Log today’s mood',
+                    description: 'Capture today’s emotional baseline before mid-day meetings arrive.',
+                    primaryAction: {
+                        label: 'Open mood tracker',
+                        handler: () => {
+                            switchView('mood');
+                            document.getElementById('moodDate').value = today;
+                        }
+                    },
+                    secondaryAction: {
+                        label: 'Quick log balanced',
+                        handler: () => {
+                            AppActions.logMood({ date: today, mood: 'balanced', notes: 'Quick capture from suggestion' });
+                        }
+                    }
+                });
+            }
+
+            const pendingTask = AppState.state.tasks.find(task => task.status === 'pending');
+            if (pendingTask) {
+                suggestions.push({
+                    id: 'suggest-focus-task',
+                    title: `Focus on “${pendingTask.title}”`,
+                    description: 'Advance the next actionable task to maintain meaningful progress.',
+                    primaryAction: {
+                        label: 'Mark completed',
+                        handler: () => AppActions.toggleTask(pendingTask.id)
+                    },
+                    secondaryAction: {
+                        label: 'Adjust priority',
+                        handler: () => {
+                            const newPriority = prompt('Set new priority (low / normal / high):', pendingTask.priority);
+                            if (!newPriority) return;
+                            const normalized = newPriority.toLowerCase().trim();
+                            if (!['low', 'normal', 'high'].includes(normalized)) {
+                                alert('Priority must be low, normal, or high.');
+                                return;
+                            }
+                            AppActions.updateTask(pendingTask.id, { priority: normalized });
+                        }
+                    }
+                });
+            }
+
+            const streakLow = AppState.state.habits.find(habit => habit.streak === 0);
+            if (streakLow) {
+                suggestions.push({
+                    id: 'suggest-habit-checkin',
+                    title: `Jump start “${streakLow.name}”`,
+                    description: 'Build momentum with a quick check-in to extend your streak.',
+                    primaryAction: {
+                        label: 'Check-in now',
+                        handler: () => AppActions.checkInHabit(streakLow.id)
+                    },
+                    secondaryAction: {
+                        label: 'Edit habit',
+                        handler: () => {
+                            switchView('habits');
+                        }
+                    }
+                });
+            }
+
+            if (AppState.state.dailyPlanner.length === 0) {
+                suggestions.push({
+                    id: 'suggest-plan-day',
+                    title: 'Sketch today’s plan',
+                    description: 'Add a planning block to create intent and clarity.',
+                    primaryAction: {
+                        label: 'Add focus block',
+                        handler: () => {
+                            const now = new Date();
+                            const hour = String(now.getHours()).padStart(2, '0');
+                            document.getElementById('plannerTime').value = `${hour}:00`;
+                            document.getElementById('plannerTitle').focus();
+                            switchView('planner');
+                        }
+                    }
+                });
+            }
+
+            if (!AppState.state.habits.some(habit => /water|hydrate|hydration/.test(habit.name.toLowerCase()))) {
+                suggestions.push({
+                    id: 'suggest-habit-water',
+                    title: 'Add hydration reminder',
+                    description: 'Staying hydrated drives focus clarity — set a daily reminder.',
+                    primaryAction: {
+                        label: 'Create habit',
+                        handler: () => {
+                            AppActions.addHabit({ name: 'Hydration break', frequency: 'daily' });
+                        }
+                    }
+                });
+            }
+
+            return suggestions;
+        }
+
+        function switchView(view) {
+            AppState.view = view;
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.toggle('active', button.dataset.view === view);
+            });
+            document.querySelectorAll('.view-card').forEach(card => {
+                card.classList.toggle('active', card.id === `view-${view}`);
+            });
+        }
+
+        function resolveConflict(id, resolution) {
+            const index = AppState.conflicts.findIndex(conflict => conflict.id === id);
+            if (index === -1) return;
+            const conflict = AppState.conflicts[index];
+            if (resolution === 'local') {
+                conflict.local.updatedAt = Date.now() + 5;
+                conflict.local.syncStatus = 'pending';
+                SyncManager.enqueue(conflict.entity, 'upsert', conflict.local);
+                const entityList = AppState.state[conflict.entity];
+                const localIndex = entityList.findIndex(item => item.id === conflict.local.id);
+                if (localIndex !== -1) {
+                    entityList[localIndex] = { ...entityList[localIndex], ...conflict.local, syncStatus: 'pending' };
+                }
+                logSyncEvent('resolution', `Replayed local ${conflict.entity}`);
+            } else {
+                const entityList = AppState.state[conflict.entity];
+                const localIndex = entityList.findIndex(item => item.id === conflict.local.id);
+                if (localIndex !== -1) {
+                    entityList[localIndex] = {
+                        ...entityList[localIndex],
+                        ...conflict.remote,
+                        syncStatus: 'synced'
+                    };
+                } else {
+                    entityList.push({ ...conflict.remote, syncStatus: 'synced' });
+                }
+                logSyncEvent('resolution', `Accepted remote ${conflict.entity}`);
+            }
+            AppState.conflicts.splice(index, 1);
+            saveToStorage(STORAGE_KEYS.conflicts, AppState.conflicts);
+            saveState();
+            renderConflicts();
+            renderAll();
+            SyncManager.schedule();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => switchView(button.dataset.view));
+            });
+
+            document.getElementById('plannerForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const data = new FormData(event.target);
+                AppActions.addPlanner({
+                    title: data.get('title'),
+                    time: data.get('time'),
+                    notes: data.get('notes')
+                });
+                event.target.reset();
+            });
+
+            document.getElementById('plannerList').addEventListener('click', event => {
+                const action = event.target.dataset.action;
+                if (!action) return;
+                const id = event.target.closest('.item-card')?.dataset.id;
+                if (!id) return;
+                if (action === 'delete') {
+                    AppActions.deletePlanner(id);
+                } else if (action === 'edit') {
+                    const planner = AppState.state.dailyPlanner.find(item => item.id === id);
+                    if (!planner) return;
+                    const title = prompt('Update title', planner.title);
+                    if (title === null) return;
+                    const time = prompt('Update time (HH:MM)', planner.time) || planner.time;
+                    const notes = prompt('Update notes', planner.notes) || planner.notes;
+                    AppActions.updatePlanner(id, { title, time, notes });
+                } else if (action === 'complete') {
+                    AppActions.updatePlanner(id, { status: 'completed' });
+                }
+            });
+
+            document.getElementById('routineForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const data = new FormData(event.target);
+                AppActions.addRoutine({
+                    name: data.get('name'),
+                    cadence: data.get('cadence'),
+                    focus: data.get('focus')
+                });
+                event.target.reset();
+            });
+
+            document.getElementById('routineList').addEventListener('click', event => {
+                const action = event.target.dataset.action;
+                if (!action) return;
+                const id = event.target.closest('.item-card')?.dataset.id;
+                if (!id) return;
+                if (action === 'delete') {
+                    AppActions.deleteRoutine(id);
+                    return;
+                }
+                if (action === 'edit') {
+                    const routine = AppState.state.routines.find(item => item.id === id);
+                    if (!routine) return;
+                    const name = prompt('Routine name', routine.name) || routine.name;
+                    const focus = prompt('Focus area', routine.focus) || routine.focus;
+                    const cadence = prompt('Cadence (daily/weekly/weekend)', routine.cadence) || routine.cadence;
+                    AppActions.updateRoutine(id, { name, focus, cadence });
+                    return;
+                }
+                if (action === 'advance') {
+                    const routine = AppState.state.routines.find(item => item.id === id);
+                    if (!routine) return;
+                    const nextStatus = routine.status === 'planned' ? 'in-progress' : routine.status === 'in-progress' ? 'done' : 'planned';
+                    AppActions.updateRoutine(id, { status: nextStatus });
+                }
+            });
+
+            document.getElementById('taskForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const data = new FormData(event.target);
+                AppActions.addTask({
+                    title: data.get('title'),
+                    dueDate: data.get('dueDate'),
+                    priority: data.get('priority')
+                });
+                event.target.reset();
+            });
+
+            document.getElementById('taskList').addEventListener('click', event => {
+                const action = event.target.dataset.action;
+                if (!action) return;
+                const id = event.target.closest('.item-card')?.dataset.id;
+                if (!id) return;
+                if (action === 'toggle') {
+                    AppActions.toggleTask(id);
+                } else if (action === 'delete') {
+                    AppActions.deleteTask(id);
+                }
+            });
+
+            document.getElementById('habitForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const data = new FormData(event.target);
+                AppActions.addHabit({
+                    name: data.get('name'),
+                    frequency: data.get('frequency')
+                });
+                event.target.reset();
+            });
+
+            document.getElementById('habitList').addEventListener('click', event => {
+                const action = event.target.dataset.action;
+                if (!action) return;
+                const id = event.target.closest('.item-card')?.dataset.id;
+                if (!id) return;
+                if (action === 'checkin') {
+                    AppActions.checkInHabit(id);
+                } else if (action === 'delete') {
+                    AppActions.deleteHabit(id);
+                }
+            });
+
+            document.getElementById('moodForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const data = new FormData(event.target);
+                AppActions.logMood({
+                    date: data.get('date'),
+                    mood: data.get('mood'),
+                    notes: data.get('notes')
+                });
+                event.target.reset();
+            });
+
+            document.getElementById('moodList').addEventListener('click', event => {
+                const action = event.target.dataset.action;
+                if (!action) return;
+                const id = event.target.closest('.item-card')?.dataset.id;
+                if (!id) return;
+                if (action === 'edit') {
+                    const mood = AppState.state.moods.find(item => item.id === id);
+                    if (!mood) return;
+                    const value = prompt('Mood (energised/balanced/stretched/drained)', mood.mood) || mood.mood;
+                    const notes = prompt('Notes', mood.notes) || mood.notes;
+                    AppActions.updateMood(id, { mood: value, notes });
+                } else if (action === 'delete') {
+                    AppActions.deleteMood(id);
+                }
+            });
+
+            document.getElementById('conflictPanel').addEventListener('click', event => {
+                const resolution = event.target.dataset.resolution;
+                if (!resolution) return;
+                const id = event.target.closest('.conflict-card')?.dataset.id;
+                if (!id) return;
+                resolveConflict(id, resolution === 'local' ? 'local' : 'remote');
+            });
+
+            document.getElementById('refreshSuggestionsBtn').addEventListener('click', refreshSuggestions);
+            document.getElementById('runTestsBtn').addEventListener('click', () => TestRunner.run());
+
+            window.addEventListener('online', () => {
+                updateConnectionStatus();
+                SyncManager.schedule();
+            });
+            window.addEventListener('offline', updateConnectionStatus);
+        }
+
+        const SnapshotManager = {
+            capture() {
+                return {
+                    state: deepClone(AppState.state),
+                    queue: deepClone(SyncManager.queue),
+                    conflicts: deepClone(AppState.conflicts),
+                    syncLog: deepClone(AppState.syncLog),
+                    remote: FakeRemoteAPI.snapshot(),
+                    lastSync: AppState.lastSync
+                };
+            },
+            restore(snapshot) {
+                AppState.state = deepClone(snapshot.state);
+                SyncManager.queue = deepClone(snapshot.queue);
+                AppState.conflicts = deepClone(snapshot.conflicts);
+                AppState.syncLog = deepClone(snapshot.syncLog);
+                AppState.lastSync = snapshot.lastSync;
+                FakeRemoteAPI.restore(snapshot.remote);
+                saveState();
+                saveToStorage(STORAGE_KEYS.queue, SyncManager.queue);
+                saveToStorage(STORAGE_KEYS.conflicts, AppState.conflicts);
+                saveToStorage(STORAGE_KEYS.syncLog, AppState.syncLog);
+                updateLastSyncLabel();
+                updateQueueLabel();
+                renderAll();
+            },
+            reset() {
+                AppState.state = defaultState();
+                SyncManager.queue = [];
+                AppState.conflicts = [];
+                AppState.syncLog = [];
+                AppState.lastSync = null;
+                FakeRemoteAPI.reset();
+                saveState();
+                saveToStorage(STORAGE_KEYS.queue, SyncManager.queue);
+                saveToStorage(STORAGE_KEYS.conflicts, AppState.conflicts);
+                saveToStorage(STORAGE_KEYS.syncLog, AppState.syncLog);
+                updateLastSyncLabel();
+                updateQueueLabel();
+                renderAll();
+            }
+        };
+
+        const TestRunner = (() => {
+            const state = {
+                running: false,
+                results: []
+            };
+
+            function logResult(name, status, detail = '') {
+                state.results.push({ id: createId(), name, status, detail, timestamp: Date.now() });
+                renderTestLog();
+            }
+
+            function clearResults() {
+                state.results = [];
+                renderTestLog();
+            }
+
+            function assert(condition, message) {
+                if (!condition) throw new Error(message || 'Assertion failed');
+            }
+
+            async function runPlannerCrud() {
+                const entry = AppActions.addPlanner({ title: 'Instrumentation sync', time: '09:00', notes: 'Auto test' });
+                assert(AppState.state.dailyPlanner.some(item => item.id === entry.id), 'Planner entry missing after create');
+                AppActions.updatePlanner(entry.id, { notes: 'Updated note' });
+                const updated = AppState.state.dailyPlanner.find(item => item.id === entry.id);
+                assert(updated.notes === 'Updated note', 'Planner entry not updated');
+                AppActions.deletePlanner(entry.id);
+                assert(!AppState.state.dailyPlanner.some(item => item.id === entry.id), 'Planner entry not deleted');
+            }
+
+            async function runTaskCrud() {
+                const entry = AppActions.addTask({ title: 'Ship release', dueDate: null, priority: 'high' });
+                assert(AppState.state.tasks.some(item => item.id === entry.id), 'Task missing after create');
+                AppActions.toggleTask(entry.id);
+                const toggled = AppState.state.tasks.find(item => item.id === entry.id);
+                assert(toggled.status === 'completed', 'Task not toggled');
+                AppActions.deleteTask(entry.id);
+                assert(!AppState.state.tasks.some(item => item.id === entry.id), 'Task not deleted');
+            }
+
+            async function runHabitFlow() {
+                const habit = AppActions.addHabit({ name: 'Test hydration', frequency: 'daily' });
+                AppActions.checkInHabit(habit.id);
+                const updated = AppState.state.habits.find(item => item.id === habit.id);
+                assert(updated.streak === 1, 'Habit streak did not update');
+                AppActions.deleteHabit(habit.id);
+                assert(!AppState.state.habits.some(item => item.id === habit.id), 'Habit not deleted');
+            }
+
+            async function runMoodFlow() {
+                const today = new Date().toISOString().slice(0, 10);
+                const entry = AppActions.logMood({ date: today, mood: 'balanced', notes: 'Instrumentation check' });
+                AppActions.updateMood(entry.id, { mood: 'energised' });
+                const updated = AppState.state.moods.find(item => item.id === entry.id);
+                assert(updated.mood === 'energised', 'Mood not updated');
+                AppActions.deleteMood(entry.id);
+                assert(!AppState.state.moods.some(item => item.id === entry.id), 'Mood not deleted');
+            }
+
+            async function runConflictScenario() {
+                const routine = AppActions.addRoutine({ name: 'Conflict routine', cadence: 'daily', focus: 'Focus' });
+                await SyncManager.flush();
+                FakeRemoteAPI.forcePut('routines', {
+                    ...routine,
+                    focus: 'Remote focus',
+                    updatedAt: Date.now() + 100000,
+                    syncStatus: 'synced'
+                });
+                AppActions.updateRoutine(routine.id, { focus: 'Local focus' });
+                await SyncManager.flush();
+                const conflict = AppState.conflicts.find(item => item.local.id === routine.id);
+                assert(conflict, 'Conflict not detected');
+                resolveConflict(conflict.id, 'remote');
+                await SyncManager.flush();
+                const resolved = AppState.conflicts.find(item => item.local.id === routine.id);
+                assert(!resolved, 'Conflict not resolved');
+            }
+
+            async function executeTest(name, fn) {
+                try {
+                    await fn();
+                    logResult(name, 'pass');
+                } catch (error) {
+                    console.error(error);
+                    logResult(name, 'fail', error.message);
+                }
+            }
+
+            return {
+                async run() {
+                    if (state.running) return;
+                    state.running = true;
+                    clearResults();
+                    const snapshot = SnapshotManager.capture();
+                    SnapshotManager.reset();
+                    SyncManager.forceOnline = true;
+
+                    const tests = [
+                        ['Daily planner CRUD', runPlannerCrud],
+                        ['Task CRUD', runTaskCrud],
+                        ['Habit check-in flow', runHabitFlow],
+                        ['Mood tracking CRUD', runMoodFlow],
+                        ['Sync conflict resolution', runConflictScenario]
+                    ];
+
+                    for (const [name, fn] of tests) {
+                        await executeTest(name, fn);
+                    }
+
+                    SyncManager.forceOnline = false;
+                    SnapshotManager.restore(snapshot);
+                    state.running = false;
+                    renderTestLog();
+                },
+                get results() {
+                    return state.results;
+                },
+                get running() {
+                    return state.running;
+                }
+            };
+        })();
+
+        function renderTestLog() {
+            const container = document.getElementById('testLog');
+            container.innerHTML = '';
+            const results = (TestRunner && TestRunner.results) || [];
+            if (!results.length) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = TestRunner && TestRunner.running ? 'Running instrumentation…' : 'Run instrumentation to see coverage results.';
+                container.appendChild(empty);
+                return;
+            }
+
+            results.forEach(result => {
+                const node = document.createElement('div');
+                node.className = `test-result ${result.status}`;
+
+                const header = document.createElement('div');
+                header.className = 'test-result-header';
+                const name = document.createElement('span');
+                name.textContent = result.name;
+                const statusTag = document.createElement('span');
+                statusTag.className = `tag ${result.status === 'pass' ? 'synced' : 'conflict'}`;
+                statusTag.textContent = result.status.toUpperCase();
+                header.appendChild(name);
+                header.appendChild(statusTag);
+
+                node.appendChild(header);
+
+                if (result.detail) {
+                    const detail = document.createElement('div');
+                    detail.className = 'muted';
+                    detail.textContent = result.detail;
+                    node.appendChild(detail);
+                }
+
+                container.appendChild(node);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            updateConnectionStatus();
+            updateQueueLabel();
+            updateLastSyncLabel();
+            renderAll();
+            renderTestLog();
+            const moodDateField = document.getElementById('moodDate');
+            if (moodDateField) {
+                moodDateField.value = new Date().toISOString().slice(0, 10);
+            }
+            navigator.serviceWorker && navigator.serviceWorker.register('./mobile_personal_hub-sw.js').catch(() => {});
+            setTimeout(() => TestRunner.run(), 1200);
+        });
+
+        setInterval(() => {
+            if (navigator.onLine) {
+                SyncManager.schedule();
+            }
+        }, 12000);
+    </script>
+</body>
+</html>
