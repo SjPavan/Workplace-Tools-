@@ -1,0 +1,19 @@
+# General
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log
+
+# Node
+node_modules/
+.npm/
+
+# Build outputs
+dist/
+out/
+coverage/
+
+# Local environment overrides
+.env
+.env.local
