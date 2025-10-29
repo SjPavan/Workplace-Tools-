@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Extraction Console</title>
+    <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3650c9;
+            --accent: #27ae60;
+            --accent-dark: #1e874a;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --surface: #ffffff;
+            --background: #f4f6fb;
+            --text: #1f2d3d;
+            --muted: #6b7a90;
+            --border: #d5dcea;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 4px 12px rgba(31, 45, 61, 0.08);
+            --shadow-md: 0 8px 24px rgba(31, 45, 61, 0.12);
+            --gradient-primary: linear-gradient(135deg, #4a6cf7, #7f53ac);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .app-shell {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px 64px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .header-top h1 {
+            font-size: 28px;
+            letter-spacing: -0.02em;
+        }
+
+        .connection-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            border-radius: 99px;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .connection-pill span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+
+        .connection-pill[data-status="connected"] span {
+            background: var(--accent);
+        }
+
+        .connection-pill[data-status="connecting"] span {
+            background: var(--warning);
+        }
+
+        .connection-pill[data-status="disconnected"] span {
+            background: var(--danger);
+        }
+
+        .meta-description {
+            max-width: 760px;
+            color: var(--muted);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 24px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+        }
+
+        .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title h2 {
+            font-size: 18px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: -4px;
+        }
+
+        .wizard-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .wizard-steps::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .wizard-step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 33%;
+        }
+
+        .wizard-step span {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--border);
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .wizard-step[data-active="true"] span {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .wizard-step[data-complete="true"] span {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .wizard-step small {
+            color: var(--muted);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .wizard-panel {
+            display: none;
+        }
+
+        .wizard-panel[data-active="true"] {
+            display: block;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="datetime-local"],
+        select,
+        textarea {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+        }
+
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+
+        button {
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-tertiary {
+            background: rgba(74, 108, 247, 0.08);
+            color: var(--primary);
+        }
+
+        .btn-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .inline-help {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .error-callout {
+            background: rgba(231, 76, 60, 0.08);
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .summary-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px dashed var(--border);
+            background: #f9fbff;
+        }
+
+        .summary-box h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .dataset-preview {
+            margin-top: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .dataset-preview header {
+            padding: 12px 16px;
+            background: rgba(74, 108, 247, 0.06);
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .dataset-preview pre {
+            margin: 0;
+            padding: 16px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toolbar-left,
+        .toolbar-right {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            background: rgba(211, 216, 230, 0.35);
+        }
+
+        .tag[data-variant="running"] {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+        }
+
+        .tag[data-variant="completed"] {
+            background: rgba(39, 174, 96, 0.15);
+            color: var(--accent);
+        }
+
+        .tag[data-variant="failed"] {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-wrapper {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        th, td {
+
+            text-align: left;
+            font-size: 14px;
+        }
+
+        thead {
+            background: rgba(74, 108, 247, 0.06);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(74, 108, 247, 0.05);
+        }
+
+        tbody tr[data-selected="true"] {
+            background: rgba(74, 108, 247, 0.1);
+        }
+
+        .empty-state {
+            padding: 32px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .progress-container {
+            margin-top: 12px;
+            background: rgba(74, 108, 247, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            height: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .run-history {
+            display: grid;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .run-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: grid;
+            gap: 8px;
+            background: #fbfdff;
+        }
+
+        .run-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .run-card-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .log-stream {
+            max-height: 280px;
+            overflow: auto;
+            display: grid;
+            gap: 12px;
+        }
+
+        .log-item {
+            display: grid;
+            gap: 4px;
+            border-left: 3px solid transparent;
+            padding-left: 12px;
+        }
+
+        .log-item[data-level="info"] {
+            border-color: var(--info);
+        }
+
+        .log-item[data-level="warning"] {
+            border-color: var(--warning);
+        }
+
+        .log-item[data-level="error"] {
+            border-color: var(--danger);
+        }
+
+        .log-item time {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .log-item span {
+            font-size: 14px;
+        }
+
+        .filter-row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-bottom: 16px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            display: inline-block;
+        }
+
+        .status-dot[data-status="Running"] {
+            background: var(--info);
+        }
+
+        .status-dot[data-status="Scheduled"] {
+            background: var(--primary);
+        }
+
+        .status-dot[data-status="Completed"] {
+            background: var(--accent);
+        }
+
+        .status-dot[data-status="Failed"] {
+            background: var(--danger);
+        }
+
+        .status-dot[data-status="Paused"] {
+            background: var(--muted);
+        }
+
+        .result-preview {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .result-preview table tr:nth-child(even) {
+            background: rgba(74, 108, 247, 0.04);
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: rgba(74, 108, 247, 0.12);
+            color: var(--primary);
+        }
+
+        .pill-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 999px;
+            background: rgba(211, 216, 230, 0.4);
+        }
+
+        .pill-toggle input {
+            margin: 0;
+        }
+
+        .realtime-feed {
+            margin-top: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: #fbfdff;
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: grid;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .realtime-feed span {
+            color: var(--muted);
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge[data-variant="info"] {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+        }
+
+        .badge[data-variant="success"] {
+            background: rgba(39, 174, 96, 0.15);
+            color: var(--accent);
+        }
+
+        .badge[data-variant="warning"] {
+            background: rgba(243, 156, 18, 0.15);
+            color: var(--warning);
+        }
+
+        .badge[data-variant="danger"] {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 1120px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .wizard-steps {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .wizard-steps::before {
+                display: none;
+            }
+
+            .wizard-step {
+                width: 100%;
+                align-items: flex-start;
+            }
+
+            .header-top {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header>
+        <div class="header-top">
+            <div>
+                <h1>Web Extraction Console</h1>
+                <p class="meta-description">Create scraping jobs with a guided wizard, manage schedules, and monitor progress in real time. Supabase realtime keeps job telemetry streaming while result previews, logging, and export actions remain one click away.</p>
+            </div>
+            <div class="connection-pill" id="realtimeStatus" data-status="connecting">
+                <span></span>
+                <strong>Realtime</strong>
+                <small id="realtimeStatusLabel">Connecting…</small>
+            </div>
+        </div>
+        <div class="chip-row">
+            <div class="chip">Guided job builder</div>
+            <div class="chip">Supabase realtime (mock)</div>
+            <div class="chip">Retry &amp; error controls</div>
+            <div class="chip">Downloadable exports</div>
+        </div>
+    </header>
+
+    <div class="grid-layout">
+        <div class="column">
+            <section class="card" aria-labelledby="wizardTitle">
+                <div class="card-title">
+                    <div>
+                        <h2 id="wizardTitle">Job builder wizard</h2>
+                        <p class="card-subtitle">Walk through each step to configure a new web extraction job.</p>
+                    </div>
+                    <span class="badge" data-variant="info" id="wizardStepBadge">Step 1 of 3</span>
+                </div>
+
+                <div class="wizard-steps">
+                    <div class="wizard-step" data-step="1" data-active="true">
+                        <span>1</span>
+                        <small>Source</small>
+                    </div>
+                    <div class="wizard-step" data-step="2">
+                        <span>2</span>
+                        <small>Extraction</small>
+                    </div>
+                    <div class="wizard-step" data-step="3">
+                        <span>3</span>
+                        <small>Schedule</small>
+                    </div>
+                </div>
+
+                <div class="wizard-panel" data-step-panel="1" data-active="true">
+                    <div class="field-grid">
+                        <label>
+                            Job name
+                            <input data-testid="job-name-input" id="jobName" type="text" placeholder="e.g. Weekly Product Harvest" required>
+                        </label>
+                        <label>
+                            Source URL
+                            <input data-testid="job-url-input" id="jobSourceUrl" type="url" placeholder="https://example.com/products" required>
+                        </label>
+                        <label>
+                            Content type
+                            <select id="jobContentType" data-testid="job-content-type-select">
+                                <option value="listings">Listings</option>
+                                <option value="articles">Articles</option>
+                                <option value="catalog">Catalog</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </label>
+                        <label>
+                            Region filter
+                            <select id="jobRegion" data-testid="job-region-select">
+                                <option value="global">Global</option>
+                                <option value="na">North America</option>
+                                <option value="eu">Europe</option>
+                                <option value="apac">APAC</option>
+                            </select>
+                        </label>
+                    </div>
+                    <p class="inline-help">Provide a descriptive name and the entry URL. Region and content type help downstream routing and allow filtering later.</p>
+                </div>
+
+                <div class="wizard-panel" data-step-panel="2">
+                    <div class="field-grid">
+                        <label>
+                            Title selector
+                            <input id="selectorTitle" type="text" value=".product-card .name" placeholder="CSS selector" data-testid="selector-title-input">
+                        </label>
+                        <label>
+                            Price selector
+                            <input id="selectorPrice" type="text" value=".product-card .price" placeholder="CSS selector">
+                        </label>
+                        <label>
+                            Detail selector
+                            <input id="selectorDetails" type="text" value=".product-card .description" placeholder="CSS selector">
+                        </label>
+                        <label>
+                            Pagination mode
+                            <select id="paginationMode">
+                                <option value="auto">Auto-detect</option>
+                                <option value="infinite">Infinite scroll</option>
+                                <option value="numbered">Numbered links</option>
+                                <option value="none">Single page</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label>
+                        Custom extraction notes
+                        <textarea id="extractionNotes" placeholder="Optional hints for the extraction agent"></textarea>
+                    </label>
+                    <div class="wizard-actions" style="margin-top: 12px;">
+                        <button type="button" class="btn-tertiary" id="generateSampleBtn">Generate sample preview</button>
+                        <span class="inline-help" id="sampleStatusInline">Waiting for preview…</span>
+                    </div>
+                    <div class="dataset-preview" id="samplePreview" hidden>
+                        <header>Mock sample preview</header>
+                        <pre id="samplePreviewBody"></pre>
+                    </div>
+                </div>
+
+                <div class="wizard-panel" data-step-panel="3">
+                    <div class="field-grid">
+                        <label>
+                            Run cadence
+                            <select id="scheduleCadence" data-testid="schedule-cadence-select">
+                                <option value="run-once">Run once immediately</option>
+                                <option value="hourly">Hourly</option>
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </label>
+                        <label>
+                            First run
+                            <input id="scheduleStart" type="datetime-local" data-testid="schedule-start-input">
+                        </label>
+                        <label>
+                            Retry behavior
+                            <select id="retryPolicy" data-testid="retry-policy-select">
+                                <option value="auto">Auto retry (3x)</option>
+                                <option value="manual">Manual only</option>
+                                <option value="none">No retries</option>
+                            </select>
+                        </label>
+                        <label class="pill-toggle">
+                            <input type="checkbox" id="notifyOnFailure" checked>
+                            Notify on failure
+                        </label>
+                    </div>
+                    <div class="summary-box" id="wizardSummary">
+                        <h3>Run summary</h3>
+                        <div class="summary-grid" id="wizardSummaryGrid"></div>
+                    </div>
+                </div>
+
+                <div id="wizardError" class="error-callout" hidden></div>
+
+                <div class="wizard-actions">
+                    <button type="button" class="btn-tertiary" id="wizardBack" data-testid="wizard-back" disabled>Back</button>
+                    <button type="button" class="btn-primary" id="wizardNext" data-testid="wizard-next">Continue</button>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="scheduleTitle">
+                <div class="card-title">
+                    <div>
+                        <h2 id="scheduleTitle">Schedule management</h2>
+                        <p class="card-subtitle">Filter, monitor, and orchestrate existing jobs.</p>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <label>
+                        Search
+                        <input type="text" id="filterSearch" placeholder="Search by job name" data-testid="job-search-input">
+                    </label>
+                    <label>
+                        Status
+                        <select id="filterStatus" data-testid="job-status-filter">
+                            <option value="all">All statuses</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Running">Running</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Paused">Paused</option>
+                        </select>
+                    </label>
+                    <label>
+                        Cadence
+                        <select id="filterCadence">
+                            <option value="all">All cadences</option>
+                            <option value="run-once">Run once</option>
+                            <option value="hourly">Hourly</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="table-wrapper">
+                    <table aria-describedby="scheduleTitle">
+                        <thead>
+                        <tr>
+                            <th>Job</th>
+                            <th>Cadence</th>
+                            <th>Status</th>
+                            <th>Last run</th>
+                            <th>Next run</th>
+                            <th>Controls</th>
+                        </tr>
+                        </thead>
+                        <tbody id="jobsTableBody"></tbody>
+                    </table>
+                    <div class="empty-state" id="jobsEmptyState">No jobs yet. Schedule a new extraction to see it here.</div>
+                </div>
+            </section>
+        </div>
+
+        <div class="column">
+            <section class="card" aria-labelledby="monitorTitle">
+                <div class="card-title">
+                    <div>
+                        <h2 id="monitorTitle">Job monitor</h2>
+                        <p class="card-subtitle" id="monitorSubtitle">Select a job to see real-time progress and controls.</p>
+                    </div>
+                    <span class="badge" id="monitorStatusBadge" data-variant="warning">Idle</span>
+                </div>
+
+                <div id="monitorContent">
+                    <div class="empty-state">
+                        Select a job from the schedule to inspect its telemetry.
+                    </div>
+                </div>
+
+                <div class="realtime-feed" id="realtimeFeed" aria-live="polite"></div>
+            </section>
+
+            <section class="card" aria-labelledby="resultsTitle">
+                <div class="card-title">
+                    <div>
+                        <h2 id="resultsTitle">Result preview &amp; exports</h2>
+                        <p class="card-subtitle">Inspect the latest run output and download exports.</p>
+                    </div>
+                    <div class="toolbar-right">
+                        <button type="button" class="btn-primary" id="downloadCsvBtn" data-testid="download-export-btn" disabled>Download CSV</button>
+                        <button type="button" class="btn-tertiary" id="downloadJsonBtn" disabled>Download JSON</button>
+                    </div>
+                </div>
+
+                <div id="resultsContent">
+                    <div class="empty-state">Choose a job to preview run data.</div>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="logsTitle">
+                <div class="card-title">
+                    <div>
+                        <h2 id="logsTitle">Logging</h2>
+                        <p class="card-subtitle">Track events, warnings, and errors streamed from the job runtime.</p>
+                    </div>
+                    <div class="toolbar-right">
+                        <label>
+                            Severity
+                            <select id="logSeverityFilter">
+                                <option value="all">All</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warnings</option>
+                                <option value="error">Errors</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn-tertiary" id="clearLogsBtn">Clear</button>
+                    </div>
+                </div>
+
+                <div class="log-stream" id="logStream"></div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const state = {
+        wizardStep: 1,
+        jobs: [],
+        activeJobId: null,
+        filters: {
+            search: "",
+            status: "all",
+            cadence: "all"
+        },
+        logs: [],
+        realtimeEvents: [],
+        supabaseStatus: "connecting"
+    };
+
+    const elements = {
+        wizardSteps: document.querySelectorAll('.wizard-step'),
+        wizardPanels: document.querySelectorAll('.wizard-panel'),
+        wizardNext: document.getElementById('wizardNext'),
+        wizardBack: document.getElementById('wizardBack'),
+        wizardError: document.getElementById('wizardError'),
+        wizardStepBadge: document.getElementById('wizardStepBadge'),
+        wizardSummaryGrid: document.getElementById('wizardSummaryGrid'),
+        jobName: document.getElementById('jobName'),
+        jobSourceUrl: document.getElementById('jobSourceUrl'),
+        jobContentType: document.getElementById('jobContentType'),
+        jobRegion: document.getElementById('jobRegion'),
+        selectorTitle: document.getElementById('selectorTitle'),
+        selectorPrice: document.getElementById('selectorPrice'),
+        selectorDetails: document.getElementById('selectorDetails'),
+        paginationMode: document.getElementById('paginationMode'),
+        extractionNotes: document.getElementById('extractionNotes'),
+        scheduleCadence: document.getElementById('scheduleCadence'),
+        scheduleStart: document.getElementById('scheduleStart'),
+        retryPolicy: document.getElementById('retryPolicy'),
+        notifyOnFailure: document.getElementById('notifyOnFailure'),
+        samplePreview: document.getElementById('samplePreview'),
+        samplePreviewBody: document.getElementById('samplePreviewBody'),
+        sampleStatusInline: document.getElementById('sampleStatusInline'),
+        jobsTableBody: document.getElementById('jobsTableBody'),
+        jobsEmptyState: document.getElementById('jobsEmptyState'),
+        filterSearch: document.getElementById('filterSearch'),
+        filterStatus: document.getElementById('filterStatus'),
+        filterCadence: document.getElementById('filterCadence'),
+        monitorContent: document.getElementById('monitorContent'),
+        monitorStatusBadge: document.getElementById('monitorStatusBadge'),
+        monitorSubtitle: document.getElementById('monitorSubtitle'),
+        realtimeFeed: document.getElementById('realtimeFeed'),
+        realtimeStatus: document.getElementById('realtimeStatus'),
+        realtimeStatusLabel: document.getElementById('realtimeStatusLabel'),
+        downloadCsvBtn: document.getElementById('downloadCsvBtn'),
+        downloadJsonBtn: document.getElementById('downloadJsonBtn'),
+        resultsContent: document.getElementById('resultsContent'),
+        logStream: document.getElementById('logStream'),
+        logSeverityFilter: document.getElementById('logSeverityFilter'),
+        clearLogsBtn: document.getElementById('clearLogsBtn'),
+        generateSampleBtn: document.getElementById('generateSampleBtn')
+    };
+
+    const supabaseRealtime = createMockSupabaseRealtime();
+    const realtimeChannel = supabaseRealtime.channel('web-extraction-jobs');
+    realtimeChannel.on('broadcast', { event: 'job_update' }, ({ payload }) => {
+        handleRealtimePayload(payload);
+    }).subscribe((status) => {
+        updateSupabaseStatus(status === 'SUBSCRIBED' ? 'connected' : 'disconnected');
+    });
+
+    function updateSupabaseStatus(status) {
+        state.supabaseStatus = status;
+        const label = status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting…' : 'Disconnected';
+        elements.realtimeStatus.dataset.status = status;
+        elements.realtimeStatusLabel.textContent = label;
+        addRealtimeEvent({ type: 'status', message: `Supabase realtime ${label.toLowerCase()}.` });
+    }
+
+    function createMockSupabaseRealtime() {
+        const channels = new Map();
+        return {
+            channel(name) {
+                const channelRef = {
+                    name,
+                    listeners: [],
+                    on(type, filter, callback) {
+                        channelRef.listeners.push({ type, filter, callback });
+                        return channelRef;
+                    },
+                    subscribe(callback) {
+                        setTimeout(() => {
+                            callback('SUBSCRIBED');
+                        }, 500);
+                        return channelRef;
+                    }
+                };
+                channels.set(name, channelRef);
+                return channelRef;
+            },
+            emit(eventType, payload) {
+                channels.forEach(channelRef => {
+                    channelRef.listeners
+                        .filter(listener => listener.type === eventType)
+                        .forEach(listener => listener.callback({ event: listener.filter?.event || null, payload }));
+                });
+            }
+        };
+    }
+
+    function addRealtimeEvent(entry) {
+        const time = new Date().toLocaleTimeString();
+        state.realtimeEvents.unshift({ time, ...entry });
+        if (state.realtimeEvents.length > 40) {
+            state.realtimeEvents.length = 40;
+        }
+        renderRealtimeFeed();
+    }
+
+    function renderRealtimeFeed() {
+        if (!state.realtimeEvents.length) {
+            elements.realtimeFeed.innerHTML = '<span>No realtime events yet.</span>';
+            return;
+        }
+        elements.realtimeFeed.innerHTML = state.realtimeEvents
+            .map(event => `<div><strong>${event.time}</strong> — ${event.message}</div>`)
+            .join('');
+    }
+
+    function handleRealtimePayload(payload) {
+        const job = state.jobs.find(j => j.id === payload.jobId);
+        if (!job) return;
+        if (typeof payload.progress === 'number') {
+            job.progress = payload.progress;
+        }
+        if (payload.status) {
+            job.status = payload.status;
+        }
+        if (payload.runId && job.runs.length) {
+            const run = job.runs.find(r => r.id === payload.runId);
+            if (run) {
+                run.status = payload.status || run.status;
+                run.progress = payload.progress ?? run.progress;
+                if (payload.completedAt) {
+                    run.completedAt = payload.completedAt;
+                }
+            }
+        }
+        addRealtimeEvent({ type: 'job_update', message: `${job.name}: ${payload.status || 'update'} (${payload.progress ?? job.progress}%)` });
+        renderJobsTable();
+        renderMonitor();
+        renderResults();
+    }
+
+    function setWizardStep(step) {
+        state.wizardStep = step;
+        elements.wizardSteps.forEach(stepEl => {
+            const stepNum = Number(stepEl.dataset.step);
+            stepEl.dataset.active = stepNum === step ? 'true' : 'false';
+            stepEl.dataset.complete = stepNum < step ? 'true' : 'false';
+        });
+        elements.wizardPanels.forEach(panel => {
+            panel.dataset.active = Number(panel.dataset.stepPanel) === step ? 'true' : 'false';
+        });
+        elements.wizardBack.disabled = step === 1;
+        elements.wizardNext.textContent = step === 3 ? 'Schedule job' : 'Continue';
+        elements.wizardStepBadge.textContent = `Step ${step} of 3`;
+        elements.wizardError.hidden = true;
+        if (step === 3) {
+            populateWizardSummary();
+        }
+    }
+
+    function populateWizardSummary() {
+        const summary = [
+            { label: 'Job', value: elements.jobName.value || 'Untitled' },
+            { label: 'Source', value: elements.jobSourceUrl.value || '—' },
+            { label: 'Content type', value: elements.jobContentType.value },
+            { label: 'Region', value: elements.jobRegion.value },
+            { label: 'Cadence', value: elements.scheduleCadence.options[elements.scheduleCadence.selectedIndex].text },
+            { label: 'Retry', value: elements.retryPolicy.options[elements.retryPolicy.selectedIndex].text },
+            { label: 'Notifications', value: elements.notifyOnFailure.checked ? 'Failure alerts on' : 'Failure alerts off' }
+        ];
+        elements.wizardSummaryGrid.innerHTML = summary.map(item => `
+            <div>
+                <strong>${item.label}</strong><br>
+                <span>${item.value}</span>
+            </div>
+        `).join('');
+    }
+
+    function validateStep(step) {
+        if (step === 1) {
+            if (!elements.jobName.value.trim()) {
+                showWizardError('Job name is required.');
+                return false;
+            }
+            if (!elements.jobSourceUrl.value.trim()) {
+                showWizardError('A source URL is required.');
+                return false;
+            }
+            try {
+                new URL(elements.jobSourceUrl.value.trim());
+            } catch (e) {
+                showWizardError('Please provide a valid URL (including protocol).');
+                return false;
+            }
+        }
+        if (step === 2) {
+            if (!elements.selectorTitle.value.trim()) {
+                showWizardError('At least a title selector is required.');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function showWizardError(message) {
+        elements.wizardError.textContent = message;
+        elements.wizardError.hidden = false;
+    }
+
+    function collectWizardData() {
+        return {
+            name: elements.jobName.value.trim(),
+            sourceUrl: elements.jobSourceUrl.value.trim(),
+            contentType: elements.jobContentType.value,
+            region: elements.jobRegion.value,
+            selectors: {
+                title: elements.selectorTitle.value.trim(),
+                price: elements.selectorPrice.value.trim(),
+                details: elements.selectorDetails.value.trim()
+            },
+            paginationMode: elements.paginationMode.value,
+            notes: elements.extractionNotes.value.trim(),
+            scheduleCadence: elements.scheduleCadence.value,
+            scheduleStart: elements.scheduleStart.value,
+            retryPolicy: elements.retryPolicy.value,
+            notifyOnFailure: elements.notifyOnFailure.checked
+        };
+    }
+
+    function scheduleJobFromWizard() {
+        const data = collectWizardData();
+        const now = new Date();
+        const job = {
+            id: `JOB-${Date.now()}`,
+            name: data.name,
+            sourceUrl: data.sourceUrl,
+            contentType: data.contentType,
+            region: data.region,
+            selectors: data.selectors,
+            paginationMode: data.paginationMode,
+            notes: data.notes,
+            cadence: data.scheduleCadence,
+            retryPolicy: data.retryPolicy,
+            notifyOnFailure: data.notifyOnFailure,
+            status: 'Scheduled',
+            progress: 0,
+            active: true,
+            createdAt: now,
+            nextRun: computeNextRun(data.scheduleCadence, data.scheduleStart, now),
+            lastRun: null,
+            runs: [],
+            logs: [],
+            results: [],
+            pendingTimer: null
+        };
+        state.jobs.unshift(job);
+        state.activeJobId = job.id;
+        addLog(job.id, 'info', 'Job scheduled.');
+        renderJobsTable();
+        renderMonitor();
+        renderResults();
+        resetWizard();
+        addRealtimeEvent({ type: 'job_update', message: `${job.name} scheduled (${job.cadence})` });
+        const startDate = data.scheduleStart ? new Date(data.scheduleStart) : null;
+        const startTime = startDate ? startDate.getTime() : NaN;
+        const shouldRunNow = job.cadence === 'run-once' && (!startDate || !Number.isFinite(startTime) || startDate <= now);
+        if (shouldRunNow) {
+            triggerJobRun(job.id, 'manual');
+        } else if (job.cadence === 'run-once' && Number.isFinite(startTime)) {
+            scheduleOneTimeRun(job.id, startDate);
+        }
+    }
+
+    function computeNextRun(cadence, startValue, baseDate = new Date()) {
+        if (cadence === 'run-once') {
+            return startValue ? new Date(startValue) : null;
+        }
+        if (startValue) {
+            return new Date(startValue);
+        }
+        const next = new Date(baseDate);
+        switch (cadence) {
+            case 'hourly':
+                next.setHours(next.getHours() + 1);
+                break;
+            case 'daily':
+                next.setDate(next.getDate() + 1);
+                break;
+            case 'weekly':
+                next.setDate(next.getDate() + 7);
+                break;
+            default:
+                next.setMinutes(next.getMinutes() + 5);
+        }
+        return next;
+    }
+
+    function scheduleOneTimeRun(jobId, targetDate) {
+        const job = state.jobs.find(j => j.id === jobId);
+        if (!job || !targetDate) return;
+        if (job.pendingTimer) {
+            clearTimeout(job.pendingTimer);
+        }
+        const delay = Math.max(0, targetDate.getTime() - Date.now());
+        const safeDelay = Math.min(delay, 10000);
+        job.nextRun = targetDate;
+        const accelerated = safeDelay !== delay;
+        addLog(jobId, 'info', `Run scheduled for ${formatDate(targetDate)}${accelerated ? ' (accelerated for demo)' : ''}.`);
+        renderJobsTable();
+        job.pendingTimer = setTimeout(() => {
+            job.pendingTimer = null;
+            if (job.status === 'Paused') {
+                addLog(jobId, 'warning', 'Scheduled run skipped because the job is paused.');
+                return;
+            }
+            triggerJobRun(jobId, 'scheduled');
+        }, safeDelay);
+    }
+
+    function resetWizard() {
+        elements.jobName.value = '';
+        elements.jobSourceUrl.value = '';
+        elements.extractionNotes.value = '';
+        elements.notifyOnFailure.checked = true;
+        elements.scheduleCadence.value = 'daily';
+        elements.retryPolicy.value = 'auto';
+        elements.scheduleStart.value = '';
+        elements.selectorTitle.value = '.product-card .name';
+        elements.selectorPrice.value = '.product-card .price';
+        elements.selectorDetails.value = '.product-card .description';
+        elements.samplePreview.hidden = true;
+        elements.sampleStatusInline.textContent = 'Waiting for preview…';
+        setWizardStep(1);
+    }
+
+    function renderJobsTable() {
+        const filtered = state.jobs.filter(job => {
+            const matchesSearch = !state.filters.search || job.name.toLowerCase().includes(state.filters.search);
+            const matchesStatus = state.filters.status === 'all' || job.status === state.filters.status;
+            const matchesCadence = state.filters.cadence === 'all' || job.cadence === state.filters.cadence;
+            return matchesSearch && matchesStatus && matchesCadence;
+        });
+        if (!filtered.length) {
+            elements.jobsEmptyState.hidden = false;
+            elements.jobsTableBody.innerHTML = '';
+            return;
+        }
+        elements.jobsEmptyState.hidden = true;
+        elements.jobsTableBody.innerHTML = filtered.map(job => jobRowTemplate(job)).join('');
+        elements.jobsTableBody.querySelectorAll('button[data-action]').forEach(btn => {
+            btn.addEventListener('click', handleJobRowAction);
+        });
+        elements.jobsTableBody.querySelectorAll('tr[data-job-id]').forEach(row => {
+            row.addEventListener('click', (event) => {
+                if (event.target.closest('button')) return;
+                selectJob(row.dataset.jobId);
+            });
+        });
+    }
+
+    function jobRowTemplate(job) {
+        const isSelected = state.activeJobId === job.id ? 'true' : 'false';
+        const controls = job.status === 'Paused'
+            ? `<button class="btn-primary" data-action="resume" data-job-id="${job.id}">Resume</button>`
+            : `<button class="btn-tertiary" data-action="pause" data-job-id="${job.id}">Pause</button>`;
+        const retryBtn = job.status === 'Failed'
+            ? `<button class="btn-primary" data-action="retry" data-job-id="${job.id}">Retry</button>`
+            : `<button class="btn-primary" data-action="run" data-job-id="${job.id}">Run now</button>`;
+        return `
+            <tr data-job-id="${job.id}" data-selected="${isSelected}">
+                <td>
+                    <div><strong>${job.name}</strong></div>
+                    <small>${job.sourceUrl}</small>
+                </td>
+                <td>${formatCadence(job.cadence)}</td>
+                <td>
+                    <span class="status-dot" data-status="${job.status}"></span>
+                    ${job.status}
+                </td>
+                <td>${job.lastRun ? formatDate(job.lastRun) : '—'}</td>
+                <td>${job.nextRun ? formatDate(job.nextRun) : '—'}</td>
+                <td style="display:flex; gap:8px; flex-wrap:wrap;">
+                    ${controls}
+                    ${retryBtn}
+                </td>
+            </tr>
+        `;
+    }
+
+    function handleJobRowAction(event) {
+        event.stopPropagation();
+        const button = event.currentTarget;
+        const action = button.dataset.action;
+        const jobId = button.dataset.jobId;
+        switch (action) {
+            case 'pause':
+                setJobPaused(jobId, true);
+                break;
+            case 'resume':
+                setJobPaused(jobId, false);
+                break;
+            case 'run':
+                triggerJobRun(jobId, 'manual');
+                break;
+            case 'retry':
+                triggerJobRun(jobId, 'retry');
+                break;
+        }
+    }
+
+    function selectJob(jobId) {
+        state.activeJobId = jobId;
+        renderJobsTable();
+        renderMonitor();
+        renderResults();
+        renderLogs();
+    }
+
+    function setJobPaused(jobId, paused) {
+        const job = state.jobs.find(j => j.id === jobId);
+        if (!job) return;
+        job.status = paused ? 'Paused' : 'Scheduled';
+        job.active = !paused;
+        if (paused) {
+            if (job.pendingTimer) {
+                clearTimeout(job.pendingTimer);
+                job.pendingTimer = null;
+            }
+        } else if (job.cadence === 'run-once') {
+            if (job.nextRun && job.nextRun > new Date()) {
+                scheduleOneTimeRun(jobId, job.nextRun);
+            } else if (!job.lastRun) {
+                triggerJobRun(jobId, 'manual');
+            }
+        }
+        addLog(jobId, paused ? 'warning' : 'info', paused ? 'Job paused' : 'Job resumed');
+        addRealtimeEvent({ type: 'job_update', message: `${job.name} ${paused ? 'paused' : 'resumed'}.` });
+        renderJobsTable();
+        renderMonitor();
+    }
+
+    function triggerJobRun(jobId, trigger) {
+        const job = state.jobs.find(j => j.id === jobId);
+        if (!job) return;
+        if (job.pendingTimer) {
+            clearTimeout(job.pendingTimer);
+            job.pendingTimer = null;
+        }
+        if (job.status === 'Running') {
+            addLog(jobId, 'warning', 'Run already in progress.');
+            return;
+        }
+        job.status = 'Running';
+        job.progress = 0;
+        if (job.cadence !== 'run-once') {
+            job.nextRun = computeNextRun(job.cadence, null, new Date());
+        }
+        const run = {
+            id: `RUN-${Date.now()}`,
+            status: 'Running',
+            progress: 0,
+            trigger,
+            startedAt: new Date(),
+            completedAt: null,
+            expectedCount: 0,
+            resultCount: 0,
+            error: null
+        };
+        job.runs.unshift(run);
+        addLog(jobId, 'info', `Run started (${trigger}).`);
+        renderJobsTable();
+        renderMonitor();
+
+        let tick = 0;
+        const maxTicks = 12;
+        const failureChance = trigger === 'retry' ? 0.1 : 0.2;
+        const shouldFail = Math.random() < failureChance;
+        const interval = setInterval(() => {
+            tick += 1;
+            const progress = Math.min(100, Math.round((tick / maxTicks) * 100));
+            job.progress = progress;
+            run.progress = progress;
+            supabaseRealtime.emit('broadcast', {
+                event: 'job_update',
+                jobId: job.id,
+                runId: run.id,
+                progress,
+                status: 'Running'
+            });
+            if (tick % 3 === 0) {
+                addLog(jobId, 'info', `Processed ${Math.round(progress / 5)} pages.`);
+            }
+            renderMonitor();
+            if (tick >= maxTicks) {
+                clearInterval(interval);
+                if (shouldFail) {
+                    job.status = 'Failed';
+                    run.status = 'Failed';
+                    run.error = 'Timeout while fetching page 7';
+                    run.completedAt = new Date();
+                    addLog(jobId, 'error', run.error);
+                    if (job.notifyOnFailure) {
+                        addLog(jobId, 'warning', 'Failure notification dispatched.');
+                    }
+                    supabaseRealtime.emit('broadcast', {
+                        event: 'job_update',
+                        jobId: job.id,
+                        runId: run.id,
+                        progress: 100,
+                        status: 'Failed'
+                    });
+                } else {
+                    job.status = 'Completed';
+                    run.status = 'Completed';
+                    run.completedAt = new Date();
+                    run.expectedCount = 120;
+                    run.resultCount = 117;
+                    job.lastRun = run.completedAt;
+                    job.nextRun = computeNextRun(job.cadence, null, run.completedAt);
+                    job.results = generateMockResults(job);
+                    addLog(jobId, 'info', `Run completed. ${run.resultCount} rows captured.`);
+                    supabaseRealtime.emit('broadcast', {
+                        event: 'job_update',
+                        jobId: job.id,
+                        runId: run.id,
+                        progress: 100,
+                        status: 'Completed',
+                        completedAt: run.completedAt
+                    });
+                }
+                renderJobsTable();
+                renderMonitor();
+                renderResults();
+            }
+        }, 800 + Math.random() * 400);
+    }
+
+    function generateMockResults(job) {
+        const baseTitle = job.contentType === 'articles' ? 'Article' : 'Product';
+        return Array.from({ length: 6 }).map((_, index) => ({
+            title: `${baseTitle} ${index + 1}`,
+            price: job.selectors.price ? `$${(Math.random() * 90 + 10).toFixed(2)}` : '—',
+            url: `${job.sourceUrl.replace(/\/$/, '')}/${index + 1}`,
+            excerpt: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+        }));
+    }
+
+    function renderMonitor() {
+        const job = state.jobs.find(j => j.id === state.activeJobId);
+        if (!job) {
+            elements.monitorContent.innerHTML = '<div class="empty-state">Select a job from the schedule to inspect its telemetry.</div>';
+            elements.monitorStatusBadge.textContent = 'Idle';
+            elements.monitorStatusBadge.dataset.variant = 'warning';
+            elements.monitorSubtitle.textContent = 'Select a job to see real-time progress and controls.';
+            return;
+        }
+        elements.monitorSubtitle.textContent = job.sourceUrl;
+        const variant = job.status === 'Running' ? 'info' : job.status === 'Completed' ? 'success' : job.status === 'Failed' ? 'danger' : 'warning';
+        elements.monitorStatusBadge.dataset.variant = variant;
+        elements.monitorStatusBadge.textContent = job.status;
+        const retryDisabled = job.status === 'Running';
+        elements.monitorContent.innerHTML = `
+            <div>
+                <h3>${job.name}</h3>
+                <p class="inline-help">${job.notes ? job.notes : 'Selectors: ' + Object.values(job.selectors).filter(Boolean).join(', ')}</p>
+                <div class="progress-container" aria-label="Progress">
+                    <div class="progress-bar" style="width: ${job.progress}%" data-testid="progress-bar"></div>
+                </div>
+                <div class="toolbar" style="margin-top: 16px;">
+                    <div class="toolbar-left">
+                        <span class="tag" data-variant="${job.status.toLowerCase()}">${job.progress}%</span>
+                        <span class="tag">Cadence: ${formatCadence(job.cadence)}</span>
+                        <span class="tag">Retry: ${formatRetry(job.retryPolicy)}</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn-primary" data-action="monitor-run" data-monitor-action="run" ${retryDisabled ? 'disabled' : ''}>Run again</button>
+                        <button class="btn-tertiary" data-action="monitor-run" data-monitor-action="retry" ${job.status === 'Failed' ? '' : 'disabled'} data-testid="retry-button">Retry failed run</button>
+                        <button class="btn-danger" data-action="monitor-run" data-monitor-action="fail">Simulate failure</button>
+                    </div>
+                </div>
+                <div class="run-history">
+                    ${ job.runs.length ? job.runs.map(run => runCardTemplate(run)).join('') : '<div class="empty-state">No runs yet.</div>' }
+                </div>
+            </div>
+        `;
+        elements.monitorContent.querySelectorAll('button[data-action="monitor-run"]').forEach(btn => {
+            btn.addEventListener('click', event => {
+                const action = event.currentTarget.dataset.monitorAction;
+                if (action === 'run') {
+                    triggerJobRun(job.id, 'manual');
+                } else if (action === 'retry') {
+                    triggerJobRun(job.id, 'retry');
+                } else if (action === 'fail') {
+                    markJobFailure(job.id);
+                }
+            });
+        });
+    }
+
+    function runCardTemplate(run) {
+        const variant = run.status === 'Completed' ? 'success' : run.status === 'Failed' ? 'danger' : run.status === 'Running' ? 'info' : 'warning';
+        return `
+            <div class="run-card">
+                <div class="run-card-header">
+                    <strong>${run.id}</strong>
+                    <span class="badge" data-variant="${variant}">${run.status}</span>
+                </div>
+                <div class="run-card-meta">
+                    <span>Trigger: ${run.trigger}</span>
+                    <span>Started: ${formatDate(run.startedAt)}</span>
+                    ${run.completedAt ? `<span>Completed: ${formatDate(run.completedAt)}</span>` : ''}
+                </div>
+                <div class="progress-container" style="height: 8px;">
+                    <div class="progress-bar" style="width: ${run.progress}%"></div>
+                </div>
+                ${run.error ? `<div class="error-callout" style="margin: 12px 0 0;">${run.error}</div>` : ''}
+                ${run.resultCount ? `<small>${run.resultCount} results captured (${run.expectedCount} expected)</small>` : ''}
+            </div>
+        `;
+    }
+
+    function markJobFailure(jobId) {
+        const job = state.jobs.find(j => j.id === jobId);
+        if (!job) return;
+        job.status = 'Failed';
+        job.progress = 100;
+        const run = job.runs[0];
+        if (run) {
+            run.status = 'Failed';
+            run.progress = 100;
+            run.error = 'Manual failure injected for testing.';
+            run.completedAt = new Date();
+        }
+        addLog(jobId, 'error', 'Manual failure injected for testing.');
+        supabaseRealtime.emit('broadcast', {
+            event: 'job_update',
+            jobId: job.id,
+            runId: run ? run.id : null,
+            progress: 100,
+            status: 'Failed'
+        });
+        renderJobsTable();
+        renderMonitor();
+    }
+
+    function renderResults() {
+        const job = state.jobs.find(j => j.id === state.activeJobId);
+        if (!job) {
+            elements.resultsContent.innerHTML = '<div class="empty-state">Choose a job to preview run data.</div>';
+            elements.downloadCsvBtn.disabled = true;
+            elements.downloadJsonBtn.disabled = true;
+            return;
+        }
+        if (!job.results.length) {
+            const message = job.status === 'Failed'
+                ? '<div class="error-callout">Latest run failed. No data available yet.</div>'
+                : '<div class="empty-state">No data available for this job yet.</div>';
+            elements.resultsContent.innerHTML = message;
+            elements.downloadCsvBtn.disabled = true;
+            elements.downloadJsonBtn.disabled = true;
+            return;
+        }
+        const rows = job.results.map(row => `
+            <tr>
+                <td>${row.title}</td>
+                <td>${row.price}</td>
+                <td><a href="${row.url}" target="_blank" rel="noopener">${row.url}</a></td>
+                <td>${row.excerpt}</td>
+            </tr>
+        `).join('');
+        const failureBanner = job.status === 'Failed'
+            ? '<div class="error-callout" style="margin-bottom: 16px;">Latest run failed. Showing last successful results.</div>'
+            : '';
+        elements.resultsContent.innerHTML = `
+            ${failureBanner}
+            <div class="toolbar" style="margin-bottom: 16px;">
+                <div class="toolbar-left">
+                    <span class="tag">Rows: ${job.results.length}</span>
+                    <span class="tag">Last run: ${job.lastRun ? formatDate(job.lastRun) : '—'}</span>
+                </div>
+            </div>
+            <div class="result-preview" role="table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Price</th>
+                            <th>URL</th>
+                            <th>Excerpt</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+        elements.downloadCsvBtn.disabled = false;
+        elements.downloadJsonBtn.disabled = false;
+    }
+
+    function renderLogs() {
+        const jobId = state.activeJobId;
+        const logs = jobId ? state.logs.filter(log => log.jobId === jobId) : state.logs;
+        const severity = elements.logSeverityFilter.value;
+        const filtered = severity === 'all' ? logs : logs.filter(log => log.level === severity);
+        if (!filtered.length) {
+            elements.logStream.innerHTML = '<div class="empty-state">No log messages yet. Trigger a job run to see telemetry.</div>';
+            return;
+        }
+        elements.logStream.innerHTML = filtered.slice(-100).reverse().map(log => `
+            <div class="log-item" data-level="${log.level}">
+                <time>${log.time}</time>
+                <span>${log.message}</span>
+            </div>
+        `).join('');
+    }
+
+    function addLog(jobId, level, message) {
+        const entry = {
+            jobId,
+            level,
+            message,
+            time: new Date().toLocaleTimeString()
+        };
+        state.logs.push(entry);
+        if (state.logs.length > 300) {
+            state.logs.shift();
+        }
+        renderLogs();
+    }
+
+    function formatDate(date) {
+        if (!date) return '—';
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+    }
+
+    function formatCadence(cadence) {
+        switch (cadence) {
+            case 'run-once': return 'Run once';
+            case 'hourly': return 'Hourly';
+            case 'daily': return 'Daily';
+            case 'weekly': return 'Weekly';
+            default: return cadence;
+        }
+    }
+
+    function formatRetry(policy) {
+        switch (policy) {
+            case 'auto': return 'Auto (3x)';
+            case 'manual': return 'Manual';
+            case 'none': return 'Disabled';
+            default: return policy;
+        }
+    }
+
+    function downloadResults(format) {
+        const job = state.jobs.find(j => j.id === state.activeJobId);
+        if (!job || !job.results.length) return;
+        let content;
+        let mime;
+        let filename = `${job.name.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`;
+        if (format === 'csv') {
+            const headers = Object.keys(job.results[0]);
+            const rows = job.results.map(row => headers.map(key => formatCsvCell(row[key])).join(','));
+            content = [headers.join(','), ...rows].join('\n');
+            mime = 'text/csv';
+            filename += '.csv';
+        } else {
+            content = JSON.stringify(job.results, null, 2);
+            mime = 'application/json';
+            filename += '.json';
+        }
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog(job.id, 'info', `Exported ${format.toUpperCase()} download.`);
+    }
+
+    function formatCsvCell(value) {
+        if (value == null) return '';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    }
+
+    function handleGenerateSample() {
+        elements.sampleStatusInline.textContent = 'Generating sample…';
+        elements.samplePreview.hidden = true;
+        setTimeout(() => {
+            const sample = [
+                { title: 'Product One', price: '$19.99', rating: '4.5', url: 'https://example.com/products/1' },
+                { title: 'Product Two', price: '$24.50', rating: '4.7', url: 'https://example.com/products/2' }
+            ];
+            elements.samplePreviewBody.textContent = JSON.stringify(sample, null, 2);
+            elements.samplePreview.hidden = false;
+            elements.sampleStatusInline.textContent = 'Sample ready. Adjust selectors to refine results.';
+        }, 800);
+    }
+
+    function initWizard() {
+        elements.wizardNext.addEventListener('click', () => {
+            if (!validateStep(state.wizardStep)) return;
+            if (state.wizardStep === 3) {
+                scheduleJobFromWizard();
+                return;
+            }
+            setWizardStep(state.wizardStep + 1);
+        });
+        elements.wizardBack.addEventListener('click', () => {
+            if (state.wizardStep > 1) {
+                setWizardStep(state.wizardStep - 1);
+            }
+        });
+        elements.generateSampleBtn.addEventListener('click', handleGenerateSample);
+    }
+
+    function initFilters() {
+        elements.filterSearch.addEventListener('input', event => {
+            state.filters.search = event.target.value.trim().toLowerCase();
+            renderJobsTable();
+        });
+        elements.filterStatus.addEventListener('change', event => {
+            state.filters.status = event.target.value;
+            renderJobsTable();
+        });
+        elements.filterCadence.addEventListener('change', event => {
+            state.filters.cadence = event.target.value;
+            renderJobsTable();
+        });
+    }
+
+    function initDownloads() {
+        elements.downloadCsvBtn.addEventListener('click', () => downloadResults('csv'));
+        elements.downloadJsonBtn.addEventListener('click', () => downloadResults('json'));
+    }
+
+    function initLogs() {
+        elements.logSeverityFilter.addEventListener('change', renderLogs);
+        elements.clearLogsBtn.addEventListener('click', () => {
+            state.logs = state.logs.filter(log => log.jobId !== state.activeJobId);
+            renderLogs();
+        });
+    }
+
+    function preloadDemoJob() {
+        const now = new Date();
+        const job = {
+            id: 'JOB-10001',
+            name: 'Daily Catalog Sync',
+            sourceUrl: 'https://shop.example.com/catalog',
+            contentType: 'catalog',
+            region: 'global',
+            selectors: {
+                title: '.card-title',
+                price: '.card-price',
+                details: '.card-description'
+            },
+            paginationMode: 'numbered',
+            notes: 'Capture featured catalog items each morning before 8am PST.',
+            cadence: 'daily',
+            retryPolicy: 'auto',
+            notifyOnFailure: true,
+            status: 'Completed',
+            progress: 100,
+            active: true,
+            createdAt: now,
+            nextRun: computeNextRun('daily', null, now),
+            lastRun: new Date(now.getTime() - 3600 * 1000),
+            runs: [
+                {
+                    id: 'RUN-9998',
+                    status: 'Completed',
+                    progress: 100,
+                    trigger: 'scheduled',
+                    startedAt: new Date(now.getTime() - 5400 * 1000),
+                    completedAt: new Date(now.getTime() - 3600 * 1000),
+                    expectedCount: 120,
+                    resultCount: 118,
+                    error: null
+                }
+            ],
+            results: generateMockResults({
+                contentType: 'catalog',
+                selectors: { price: '.card-price' },
+                sourceUrl: 'https://shop.example.com/catalog'
+            }),
+            pendingTimer: null
+        };
+        state.jobs.push(job);
+        addLog(job.id, 'info', 'Job seeded for demo purposes.');
+        renderJobsTable();
+    }
+
+    function initialize() {
+        initWizard();
+        initFilters();
+        initDownloads();
+        initLogs();
+        renderRealtimeFeed();
+        setWizardStep(1);
+        preloadDemoJob();
+        updateSupabaseStatus('connecting');
+        selectJob('JOB-10001');
+    }
+
+    // Kick things off
+    initialize();
+})();
+</script>
+</body>
+</html>
