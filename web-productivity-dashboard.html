@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web Productivity Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-alt: #101934;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.18);
+      --positive: #4ade80;
+      --negative: #f87171;
+      --muted: #93a9d3;
+      --card: rgba(13, 23, 48, 0.9);
+      --border: rgba(148, 163, 184, 0.15);
+      --shadow: 0 18px 60px rgba(7, 12, 24, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #162447 0%, #0b1220 65%, #050814 100%);
+      color: #e7efff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a.skip-link {
+      position: absolute;
+      left: -999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    a.skip-link:focus {
+      left: 16px;
+      top: 16px;
+      width: auto;
+      height: auto;
+      padding: 12px 16px;
+      background: var(--accent);
+      color: #04111f;
+      border-radius: 6px;
+      z-index: 1000;
+    }
+
+    header {
+      padding: 32px clamp(16px, 4vw, 60px) 24px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(15, 24, 45, 0.85));
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 12px 0 0;
+      max-width: 560px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    main {
+      flex: 1;
+      padding: 32px clamp(16px, 4vw, 60px) 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    section.card {
+      background: var(--card);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: clamp(18px, 3vw, 26px);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    section.card header.card-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    section.card header.card-meta h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    section.card header.card-meta span.meta-tag {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+
+    .planner-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .planner-slot {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(15, 24, 45, 0.65);
+      border: 1px dashed rgba(148, 163, 184, 0.2);
+      transition: border 0.2s ease, background 0.2s ease;
+    }
+
+    .planner-slot[aria-dropeffect="move"] {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    .planner-slot strong {
+      width: 64px;
+      flex-shrink: 0;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .planner-slot .slot-task {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .planner-slot .slot-task button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+
+    ul.task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 24, 45, 0.75);
+      cursor: grab;
+    }
+
+    .task-card:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .task-card .task-labels {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .task-card .priority {
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent);
+    }
+
+    .routines-list,
+    .habits-list,
+    .suggestion-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .routine-card,
+    .habit-card,
+    .suggestion-card {
+      background: rgba(11, 19, 39, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .routine-items {
+      margin: 10px 0 0;
+      padding-left: 16px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .habit-progress {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .habit-progress progress {
+      width: 100%;
+      height: 8px;
+      appearance: none;
+    }
+
+    progress::-webkit-progress-bar {
+      background: rgba(148, 163, 184, 0.12);
+      border-radius: 999px;
+    }
+
+    progress::-webkit-progress-value {
+      background: linear-gradient(90deg, var(--accent), #22d3ee);
+      border-radius: 999px;
+    }
+
+    .mood-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mood-scale {
+      width: 100%;
+    }
+
+    .mood-submit {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #04111f;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(34px, 1fr));
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .calendar-cell {
+      padding: 10px;
+      text-align: center;
+      border-radius: 12px;
+      background: rgba(10, 18, 36, 0.7);
+    }
+
+    .calendar-cell[data-has-event="true"] {
+      position: relative;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .calendar-cell[data-has-event="true"]::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .calendar-weekday {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .status-bar {
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(12, 22, 42, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-bar span {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
+
+    .summary-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .summary-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    @media (max-width: 900px) {
+      header {
+        text-align: center;
+      }
+
+      header p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#dashboard">Skip to dashboard</a>
+
+  <header>
+    <h1>Productivity Mission Control</h1>
+    <p>Your connected daily systems — plan blocks, track habits, log your mood, and respond to proactive nudges in one resilient dashboard.</p>
+  </header>
+
+  <main id="dashboard" aria-live="polite">
+    <div class="status-bar" role="status" aria-live="assertive" id="connectionStatus">
+      <span><strong>Loading live data…</strong></span>
+      <span class="status-badge" id="offlineBadge" hidden>Offline mode</span>
+    </div>
+
+    <div class="grid" aria-label="Core productivity panels">
+      <section class="card" aria-labelledby="planner-title">
+        <header class="card-meta">
+          <h2 id="planner-title">Daily Planner</h2>
+          <span class="meta-tag">Drag &amp; Drop</span>
+        </header>
+        <p id="planner-description" style="margin:0;color:var(--muted);">Drop tasks into time blocks to instantly schedule your day.</p>
+        <div class="planner-grid" role="list" aria-describedby="planner-description" id="plannerGrid"></div>
+        <div>
+          <h3 style="margin:12px 0 6px;font-size:0.95rem;color:var(--muted);">Planned focus summary</h3>
+          <ul class="summary-list" id="plannerSummary" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="tasks-title">
+        <header class="card-meta">
+          <h2 id="tasks-title">Task Queue</h2>
+          <span class="meta-tag">API synched</span>
+        </header>
+        <p style="margin:0;color:var(--muted);">Drag any task into the planner or long-press to reorder.</p>
+        <ul class="task-list" id="taskList" aria-live="polite" role="listbox"></ul>
+      </section>
+
+      <section class="card" aria-labelledby="routine-title">
+        <header class="card-meta">
+          <h2 id="routine-title">Routines</h2>
+          <span class="meta-tag">Anchors</span>
+        </header>
+        <ul class="routines-list" id="routineList"></ul>
+      </section>
+
+      <section class="card" aria-labelledby="habit-title">
+        <header class="card-meta">
+          <h2 id="habit-title">Habit Tracker</h2>
+          <span class="meta-tag">Week view</span>
+        </header>
+        <ul class="habits-list" id="habitList"></ul>
+        <div>
+          <h3 style="margin:6px 0 10px;font-size:0.95rem;color:var(--muted);">Weekly habit momentum</h3>
+          <div id="habitChart" role="img" aria-label="Weekly habit completion chart" style="height:240px"></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="mood-title">
+        <header class="card-meta">
+          <h2 id="mood-title">Mood Log</h2>
+          <span class="meta-tag">Reflect</span>
+        </header>
+        <form class="mood-form" id="moodForm" aria-describedby="mood-help">
+          <div>
+            <label for="moodLevel">How are you feeling?</label>
+            <input id="moodLevel" class="mood-scale" name="mood" type="range" min="1" max="5" step="1" value="3" aria-valuetext="Neutral" />
+            <div id="moodDescriptors" style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--muted);">
+              <span>Low</span>
+              <span>Balanced</span>
+              <span>High</span>
+            </div>
+          </div>
+          <div>
+            <label for="moodNote">Quick reflection</label>
+            <textarea id="moodNote" name="note" rows="3" placeholder="What energized or challenged you?" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(148,163,184,0.2);background:rgba(11,19,39,0.7);color:inherit;"></textarea>
+          </div>
+          <p id="mood-help" style="margin:0;color:var(--muted);font-size:0.85rem;">Entries sync locally for offline resilience.</p>
+          <button type="submit" class="mood-submit">Log entry</button>
+          <p id="moodStatus" role="status" aria-live="polite" style="margin:0;color:var(--muted);"></p>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="calendar-title">
+        <header class="card-meta">
+          <h2 id="calendar-title">Calendar</h2>
+          <span class="meta-tag">This month</span>
+        </header>
+        <div id="calendarHeader" style="display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:0.95rem;"></div>
+        <div class="calendar-grid" id="calendarGrid" role="grid" aria-label="Calendar grid"></div>
+      </section>
+
+      <section class="card" aria-labelledby="suggestion-title">
+        <header class="card-meta">
+          <h2 id="suggestion-title">Proactive Suggestions</h2>
+          <span class="meta-tag">AI assist</span>
+        </header>
+        <ul class="suggestion-list" id="suggestionList" aria-live="polite"></ul>
+        <footer style="margin-top:auto;font-size:0.8rem;color:var(--muted);">
+          Screenshots for documentation are generated automatically via Playwright visual capture.
+        </footer>
+      </section>
+    </div>
+  </main>
+
+  <template id="timeBlockTemplate">
+    <div class="slot-task">
+      <span class="slot-title"></span>
+      <button type="button" class="slot-remove" aria-label="Remove task from slot">Remove</button>
+    </div>
+  </template>
+
+  <script>
+    const plannerGrid = document.getElementById('plannerGrid');
+    const plannerSummary = document.getElementById('plannerSummary');
+    const taskList = document.getElementById('taskList');
+    const routineList = document.getElementById('routineList');
+    const habitList = document.getElementById('habitList');
+    const suggestionList = document.getElementById('suggestionList');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const offlineBadge = document.getElementById('offlineBadge');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const calendarHeader = document.getElementById('calendarHeader');
+    const moodForm = document.getElementById('moodForm');
+    const moodLevel = document.getElementById('moodLevel');
+    const moodStatus = document.getElementById('moodStatus');
+
+    const DATA_URL = '/data/productivity-data.json';
+    const STORAGE_KEY = 'productivity-dashboard-v1';
+    const MOOD_KEY = 'productivity-mood-entries';
+    const timeSlots = (() => {
+      const slots = [];
+      for (let hour = 8; hour <= 18; hour += 1) {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+        if (hour !== 18) {
+          slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+      }
+      return slots;
+    })();
+    const scheduleState = new Map();
+
+    let appData = null;
+
+    function updateConnectionStatus(message, isError = false) {
+      connectionStatus.querySelector('span').innerHTML = `<strong>${message}</strong>`;
+      connectionStatus.style.borderColor = isError ? 'rgba(248, 113, 113, 0.45)' : 'var(--border)';
+    }
+
+    function formatDuration(minutes) {
+      if (!minutes) return '—';
+      return minutes < 60 ? `${minutes}m` : `${Math.round(minutes / 60)}h`;
+    }
+
+    function renderPlanner() {
+      plannerGrid.innerHTML = '';
+      scheduleState.clear();
+      timeSlots.forEach(time => {
+        const slot = document.createElement('div');
+        slot.className = 'planner-slot';
+        slot.setAttribute('role', 'listitem');
+        slot.dataset.time = time;
+        slot.tabIndex = 0;
+        slot.setAttribute('aria-dropeffect', 'none');
+        slot.innerHTML = `<strong>${time}</strong><span class="slot-placeholder" aria-hidden="true">Drop a task</span>`;
+
+        slot.addEventListener('dragover', event => {
+          event.preventDefault();
+          slot.setAttribute('aria-dropeffect', 'move');
+        });
+
+        slot.addEventListener('dragleave', () => {
+          slot.setAttribute('aria-dropeffect', 'none');
+        });
+
+        slot.addEventListener('drop', event => {
+          event.preventDefault();
+          slot.setAttribute('aria-dropeffect', 'none');
+          const taskId = event.dataTransfer.getData('text/plain');
+          if (!taskId) return;
+          const task = appData.tasks.find(t => t.id === taskId);
+          if (!task) return;
+          placeTaskIntoSlot(slot, task);
+        });
+
+        slot.addEventListener('keyup', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            const focusedTask = document.querySelector('.task-card:focus');
+            if (focusedTask) {
+              const taskId = focusedTask.dataset.taskId;
+              const task = appData.tasks.find(t => t.id === taskId);
+              if (task) {
+                placeTaskIntoSlot(slot, task);
+              }
+            }
+          }
+        });
+
+        plannerGrid.appendChild(slot);
+      });
+    }
+
+    function placeTaskIntoSlot(slot, task) {
+      scheduleState.set(slot.dataset.time, task);
+      const template = document.getElementById('timeBlockTemplate');
+      const fragment = template.content.cloneNode(true);
+      fragment.querySelector('.slot-title').textContent = task.title;
+      const removeBtn = fragment.querySelector('.slot-remove');
+      removeBtn.addEventListener('click', () => {
+        scheduleState.delete(slot.dataset.time);
+        slot.innerHTML = `<strong>${slot.dataset.time}</strong><span class="slot-placeholder" aria-hidden="true">Drop a task</span>`;
+        updateSummary();
+      });
+      slot.innerHTML = `<strong>${slot.dataset.time}</strong>`;
+      slot.appendChild(fragment);
+      updateSummary();
+    }
+
+    function prefillPlanner() {
+      if (!appData || !Array.isArray(appData.dailyPlanner)) return;
+      appData.dailyPlanner.forEach(entry => {
+        const slot = plannerGrid.querySelector(`[data-time="${entry.time}"]`);
+        if (slot) {
+          placeTaskIntoSlot(slot, entry);
+        }
+      });
+    }
+
+    function updateSummary() {
+      const entries = Array.from(scheduleState.entries()).sort(([a], [b]) => a.localeCompare(b));
+      plannerSummary.innerHTML = '';
+      if (!entries.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No time blocks planned yet.';
+        plannerSummary.appendChild(li);
+        return;
+      }
+      entries.forEach(([time, task]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${time}</span><span>${task.title} • ${formatDuration(task.duration)}</span>`;
+        plannerSummary.appendChild(li);
+      });
+    }
+
+    function renderTasks(tasks) {
+      taskList.innerHTML = '';
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-card';
+        li.draggable = true;
+        li.tabIndex = 0;
+        li.role = 'option';
+        li.dataset.taskId = task.id;
+        li.innerHTML = `
+          <div>
+            <strong>${task.title}</strong>
+            <div class="task-labels">
+              <span class="priority">${task.priority}</span>
+              <span>${formatDuration(task.duration)}</span>
+            </div>
+          </div>
+        `;
+        li.addEventListener('dragstart', event => {
+          event.dataTransfer.setData('text/plain', task.id);
+          event.dataTransfer.effectAllowed = 'move';
+        });
+        taskList.appendChild(li);
+      });
+    }
+
+    function renderRoutines(routines) {
+      routineList.innerHTML = '';
+      routines.forEach(routine => {
+        const card = document.createElement('li');
+        card.className = 'routine-card';
+        card.innerHTML = `<strong>${routine.title}</strong>`;
+        const items = document.createElement('ul');
+        items.className = 'routine-items';
+        routine.items.forEach(step => {
+          const item = document.createElement('li');
+          item.textContent = step;
+          items.appendChild(item);
+        });
+        card.appendChild(items);
+        routineList.appendChild(card);
+      });
+    }
+
+    function renderHabits(habits) {
+      habitList.innerHTML = '';
+      habits.forEach(habit => {
+        const card = document.createElement('li');
+        card.className = 'habit-card';
+        card.innerHTML = `<strong>${habit.title}</strong>`;
+        const progress = document.createElement('div');
+        progress.className = 'habit-progress';
+        const ratio = Math.min(habit.completed / habit.target, 1);
+        const percentage = Math.round(ratio * 100);
+        progress.innerHTML = `
+          <progress max="100" value="${percentage}"></progress>
+          <span>${habit.completed}/${habit.target} ${habit.unit}</span>
+        `;
+        card.appendChild(progress);
+        habitList.appendChild(card);
+      });
+    }
+
+    function renderSuggestions(suggestions) {
+      suggestionList.innerHTML = '';
+      suggestions.forEach(suggestion => {
+        const card = document.createElement('li');
+        card.className = 'suggestion-card';
+        card.innerHTML = `
+          <strong>${suggestion.title}</strong>
+          <p style="margin:8px 0 0;color:var(--muted);">${suggestion.reason}</p>
+        `;
+        suggestionList.appendChild(card);
+      });
+    }
+
+    function renderCalendar(events) {
+      const today = new Date();
+      const displayed = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthName = displayed.toLocaleString('default', { month: 'long' });
+      calendarHeader.innerHTML = `<strong>${monthName} ${displayed.getFullYear()}</strong><span>${events.length} upcoming</span>`;
+
+      calendarGrid.innerHTML = '';
+      const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      weekdays.forEach(day => {
+        const cell = document.createElement('div');
+        cell.textContent = day;
+        cell.className = 'calendar-cell calendar-weekday';
+        cell.setAttribute('role', 'columnheader');
+        calendarGrid.appendChild(cell);
+      });
+
+      const firstDayIndex = displayed.getDay();
+      for (let i = 0; i < firstDayIndex; i += 1) {
+        const blank = document.createElement('div');
+        blank.className = 'calendar-cell';
+        blank.setAttribute('aria-hidden', 'true');
+        calendarGrid.appendChild(blank);
+      }
+
+      const lastDate = new Date(displayed.getFullYear(), displayed.getMonth() + 1, 0).getDate();
+      const eventMap = new Map(events.map(event => [event.date, event]));
+
+      for (let date = 1; date <= lastDate; date += 1) {
+        const day = document.createElement('div');
+        day.className = 'calendar-cell';
+        day.textContent = date;
+        const isoDate = new Date(displayed.getFullYear(), displayed.getMonth(), date).toISOString().slice(0, 10);
+        if (eventMap.has(isoDate)) {
+          day.dataset.hasEvent = 'true';
+          const event = eventMap.get(isoDate);
+          day.setAttribute('aria-label', `${isoDate}: ${event.title}`);
+        }
+        calendarGrid.appendChild(day);
+      }
+    }
+
+    function persistData(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+      } catch (err) {
+        console.warn('Data persistence failed', err);
+      }
+    }
+
+    function readPersistedData() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        return parsed.data;
+      } catch (err) {
+        console.warn('Unable to read cached data', err);
+        return null;
+      }
+    }
+
+    async function loadData() {
+      updateConnectionStatus('Loading live data…');
+      try {
+        const response = await fetch(DATA_URL, { cache: 'no-cache' });
+        if (!response.ok) {
+          throw new Error('Network error');
+        }
+        const data = await response.json();
+        appData = data;
+        persistData(data);
+        offlineBadge.hidden = true;
+        updateConnectionStatus('Connected to workspace intelligence');
+        hydrateUI();
+      } catch (error) {
+        console.warn('Network fetch failed', error);
+        const cached = readPersistedData();
+        if (cached) {
+          appData = cached;
+          offlineBadge.hidden = false;
+          updateConnectionStatus('Working offline – cached insights loaded');
+          hydrateUI();
+        } else {
+          updateConnectionStatus('Unable to load planner data', true);
+        }
+      }
+    }
+
+    function hydrateUI() {
+      if (!appData) return;
+      renderTasks(appData.tasks);
+      renderRoutines(appData.routines);
+      renderHabits(appData.habits);
+      renderSuggestions(appData.suggestions);
+      renderCalendar(appData.calendarEvents);
+      renderPlanner();
+      prefillPlanner();
+      updateSummary();
+      if (typeof window.renderHabitChart === 'function') {
+        window.renderHabitChart(appData.habitHistory);
+      }
+    }
+
+    function restoreMoodEntries() {
+      try {
+        const entries = JSON.parse(localStorage.getItem(MOOD_KEY) || '[]');
+        if (entries.length) {
+          const last = entries[entries.length - 1];
+          moodStatus.textContent = `Last reflection: ${last.moodLabel} at ${new Date(last.timestamp).toLocaleString()}`;
+        }
+      } catch (err) {
+        moodStatus.textContent = '';
+      }
+    }
+
+    moodForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const note = new FormData(moodForm).get('note') || '';
+      const value = Number(moodLevel.value);
+      const labels = ['Very low', 'Low', 'Neutral', 'Elevated', 'Peak'];
+      const entry = {
+        mood: value,
+        moodLabel: labels[value - 1] || 'Neutral',
+        note,
+        timestamp: Date.now(),
+      };
+      try {
+        const existing = JSON.parse(localStorage.getItem(MOOD_KEY) || '[]');
+        existing.push(entry);
+        localStorage.setItem(MOOD_KEY, JSON.stringify(existing));
+        moodStatus.textContent = `Logged ${entry.moodLabel}. ${note ? 'Reflection saved.' : ''}`;
+        moodForm.reset();
+        moodLevel.value = value;
+      } catch (err) {
+        moodStatus.textContent = 'Unable to store mood entry.';
+      }
+    });
+
+    moodLevel.addEventListener('input', () => {
+      const labels = ['Very low', 'Low', 'Neutral', 'Elevated', 'Peak'];
+      moodLevel.setAttribute('aria-valuetext', labels[moodLevel.value - 1] || 'Neutral');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPlanner();
+      restoreMoodEntries();
+      loadData();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw-productivity.js').catch(err => console.warn('Service worker failed', err));
+      }
+    });
+
+    window.__habitHistoryQueue = [];
+    window.renderHabitChart = (history) => {
+      if (typeof window.renderHabitChartImpl === 'function') {
+        window.renderHabitChartImpl(history);
+      } else {
+        window.__habitHistoryQueue.push(history);
+      }
+    };
+  </script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } = Recharts;
+
+    function HabitMomentumChart({ data = [] }) {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorMomentum" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(148,163,184,0.14)" vertical={false} />
+            <XAxis dataKey="day" stroke="rgba(148,163,184,0.6)" />
+            <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="rgba(148,163,184,0.6)" />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3', stroke: 'rgba(56,189,248,0.6)' }}
+              contentStyle={{ background: 'rgba(10,18,36,0.92)', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', color: '#e7efff' }}
+            />
+            <Area type="monotone" dataKey="completion" stroke="#38bdf8" fillOpacity={1} fill="url(#colorMomentum)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      );
+    }
+
+    function renderHabitChart(data) {
+      const mountNode = document.getElementById('habitChart');
+      if (!mountNode) return;
+      ReactDOM.render(<HabitMomentumChart data={data} />, mountNode);
+    }
+
+    window.renderHabitChartImpl = (data) => renderHabitChart(data);
+    window.renderHabitChart = window.renderHabitChartImpl;
+
+    if (Array.isArray(window.__habitHistoryQueue) && window.__habitHistoryQueue.length) {
+      window.__habitHistoryQueue.forEach(item => renderHabitChart(item));
+      window.__habitHistoryQueue.length = 0;
+    }
+  </script>
+</body>
+</html>
