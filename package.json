@@ -1,0 +1,31 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "This are the tools I used in my workplace",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --runInBand"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SjPavan/Workplace-Tools-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SjPavan/Workplace-Tools-/issues"
+  },
+  "homepage": "https://github.com/SjPavan/Workplace-Tools-#readme",
+  "dependencies": {
+    "csv-parse": "^6.1.0",
+    "dayjs": "^1.11.18",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
+}
