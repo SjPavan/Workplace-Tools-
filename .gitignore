@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+.eggs/
+build/
+dist/
+.env
+.env.local
+.env.*.local
+.venv/
+venv/
+
+# Node / JavaScript
+node_modules/
+.npm/
+.pnpm-store/
+.next/
+out/
+build/
+dist/
+coverage/
+*.log
+
+# React Native / mobile
+android/
+ios/
+*.keystore
+*.jks
+*.xcworkspace
+Pods/
+.expo/
+
+# Editors & OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Misc
+.cache/
+pytest_cache/
+.jest-cache/
+.husky/_/
