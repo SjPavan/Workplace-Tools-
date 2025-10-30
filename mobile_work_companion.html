@@ -34,7 +34,7 @@
 
         .app-shell {
             min-height: 100vh;
-            max-width: 520px;
+            width: min(96vw, 620px);
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -42,7 +42,7 @@
         }
 
         header.top-bar {
-            padding: 24px 20px 16px;
+            padding: calc(24px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px)) 16px calc(20px + env(safe-area-inset-left, 0px));
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -90,7 +90,7 @@
             display: flex;
             gap: 12px;
             overflow-x: auto;
-            padding: 0 20px 16px;
+            padding: 0 calc(20px + env(safe-area-inset-right, 0px)) 16px calc(20px + env(safe-area-inset-left, 0px));
             scrollbar-width: none;
         }
 
@@ -122,12 +122,12 @@
 
         main.modules {
             flex: 1;
-            padding-bottom: 32px;
+            padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
         }
 
         .module-card {
             background: var(--card-bg);
-            margin: 0 20px 18px;
+            margin: 0 calc(20px + env(safe-area-inset-right, 0px)) 18px calc(20px + env(safe-area-inset-left, 0px));
             padding: 18px 18px 20px;
             border-radius: var(--radius-card);
             box-shadow: var(--shadow);
@@ -239,6 +239,7 @@
             line-height: 1.52;
             color: var(--text-dark);
             min-height: 72px;
+            white-space: pre-wrap;
         }
 
         .summary-output strong {
@@ -421,6 +422,12 @@
             transition: transform 0.15s ease;
         }
 
+        .quick-chip,
+        .primary-btn,
+        .icon-btn {
+            touch-action: manipulation;
+        }
+
         .icon-btn:active {
             transform: translateY(1px);
         }
@@ -509,16 +516,27 @@
             padding: 8px 0;
         }
 
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            html {
+                scroll-behavior: auto !important;
+            }
+        }
+
         @media (min-width: 600px) {
             body {
-                padding: 24px 0;
+                padding: calc(24px + env(safe-area-inset-top, 0px)) 0 calc(24px + env(safe-area-inset-bottom, 0px));
             }
             .app-shell {
                 border-radius: 34px;
                 overflow: hidden;
             }
             header.top-bar {
-                padding-top: 32px;
+                padding-top: calc(32px + env(safe-area-inset-top, 0px));
             }
         }
     </style>
@@ -676,6 +694,7 @@
     const chatSendBtn = document.getElementById('chatSendBtn');
     const voiceBtn = document.getElementById('voiceBtn');
     const suggestionChips = document.querySelectorAll('.suggestion-chip');
+    const qaDetails = document.querySelector('#qaModule details');
 
     const modulesMap = {
         summary: 'researchModule',
@@ -685,6 +704,19 @@
         qa: 'qaModule'
     };
 
+    const motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    let prefersReducedMotion = motionQuery ? motionQuery.matches : false;
+    if (motionQuery) {
+        const updateMotionPreference = (event) => {
+            prefersReducedMotion = event.matches;
+        };
+        if (typeof motionQuery.addEventListener === 'function') {
+            motionQuery.addEventListener('change', updateMotionPreference);
+        } else if (typeof motionQuery.addListener === 'function') {
+            motionQuery.addListener(updateMotionPreference);
+        }
+    }
+
     function updateClock() {
         const now = new Date();
         const hours = now.getHours().toString().padStart(2, '0');
@@ -693,32 +725,55 @@
     }
 
     updateClock();
-    setInterval(updateClock, 60_000);
+    setInterval(updateClock, 60000);
 
     function scrollToModule(key, opts = {}) {
         const targetId = modulesMap[key];
         const target = targetId ? document.getElementById(targetId) : null;
         if (!target) return;
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const behavior = prefersReducedMotion ? 'auto' : 'smooth';
+        target.scrollIntoView({ behavior, block: 'start' });
+        const focusDelay = prefersReducedMotion ? 0 : 420;
         if (opts.focusEl) {
-            setTimeout(() => opts.focusEl.focus(), 420);
+            const focusTask = () => opts.focusEl.focus();
+            if (focusDelay === 0) {
+                focusTask();
+            } else {
+                setTimeout(focusTask, focusDelay);
+            }
         }
+        const actionDelay = prefersReducedMotion ? 0 : 480;
         if (opts.action) {
-            setTimeout(opts.action, 480);
+            if (actionDelay === 0) {
+                opts.action();
+            } else {
+                setTimeout(opts.action, actionDelay);
+            }
         }
     }
 
     quickChips.forEach(chip => {
         chip.addEventListener('click', () => {
             const action = chip.dataset.action;
+            if (action === 'upload') {
+                docUploader.click();
+                scrollToModule(action);
+                return;
+            }
             if (action === 'summary') {
                 scrollToModule(action, { focusEl: researchTopicEl });
             } else if (action === 'scrape') {
                 scrollToModule(action, { action: () => triggerScrapeJob(true) });
-            } else if (action === 'upload') {
-                scrollToModule(action, { action: () => docUploader.click() });
             } else if (action === 'chat') {
                 scrollToModule(action, { focusEl: chatInputEl });
+            } else if (action === 'qa') {
+                scrollToModule(action, {
+                    action: () => {
+                        if (qaDetails) {
+                            qaDetails.open = true;
+                        }
+                    }
+                });
             } else {
                 scrollToModule(action);
             }
