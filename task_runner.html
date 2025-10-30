@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sequential Task Runner</title>
+  <style>
+    :root {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --bg: #020617;
+      --card: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(148, 163, 184, 0.18);
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --muted: #94a3b8;
+      --pending: #f97316;
+      --running: #facc15;
+      --completed: #22c55e;
+      --danger: #f87171;
+      color: #e2e8f0;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:radial-gradient(circle at top,#0f172a 0%,#020617 70%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px;
+      color:#e2e8f0;
+    }
+    main.wrapper{
+      width:min(1100px,94%);
+      background:linear-gradient(170deg,rgba(15,23,42,0.92),rgba(15,23,42,0.78));
+      border:1px solid var(--card-border);
+      border-radius:20px;
+      padding:30px 32px 38px;
+      box-shadow:0 24px 60px rgba(2,6,23,0.55);
+    }
+    header h1{
+      margin:0 0 8px;
+      font-size:28px;
+      letter-spacing:-0.02em;
+    }
+    header .lead{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.6;
+    }
+    .grid{
+      margin-top:28px;
+      display:grid;
+      gap:18px;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    }
+    .card{
+      background:rgba(15,23,42,0.72);
+      border:1px solid rgba(148,163,184,0.12);
+      border-radius:16px;
+      padding:22px 24px 24px;
+      backdrop-filter:blur(14px);
+    }
+    .card h2{
+      margin:0 0 16px;
+      font-size:20px;
+      letter-spacing:-0.01em;
+    }
+    label{
+      display:block;
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:0.02em;
+      margin-bottom:6px;
+      color:rgba(226,232,240,0.9);
+      text-transform:uppercase;
+    }
+    input[type="text"], textarea{
+      width:100%;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,0.25);
+      background:rgba(15,23,42,0.55);
+      color:inherit;
+      font:inherit;
+      line-height:1.5;
+      transition:border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    textarea{resize:vertical;min-height:80px;}
+    input[type="text"]:focus, textarea:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(56,189,248,0.18);
+    }
+    .form-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+    button{
+      font:inherit;
+      cursor:pointer;
+      border:none;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:10px;
+      font-weight:600;
+      letter-spacing:0.01em;
+      border:1px solid transparent;
+      background:rgba(148,163,184,0.14);
+      color:#e2e8f0;
+      transition:background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+    }
+    .btn:hover:not(:disabled){
+      transform:translateY(-1px);
+      background:rgba(148,163,184,0.22);
+    }
+    .btn:disabled{
+      cursor:not-allowed;
+      opacity:0.5;
+      transform:none;
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#02111f;
+      border-color:rgba(14,165,233,0.85);
+    }
+    .btn.primary:hover:not(:disabled){
+      background:var(--accent-strong);
+    }
+    .btn.ghost{
+      background:transparent;
+      border-color:rgba(148,163,184,0.28);
+    }
+    .btn.ghost:hover:not(:disabled){
+      background:rgba(148,163,184,0.12);
+    }
+    .btn.danger{
+      background:rgba(248,113,113,0.2);
+      border-color:rgba(248,113,113,0.38);
+      color:#fecaca;
+    }
+    .btn.danger:hover:not(:disabled){
+      background:rgba(248,113,113,0.32);
+    }
+    .btn.small{
+      padding:8px 14px;
+      font-size:13px;
+    }
+    .stats{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+      margin:0 0 16px;
+    }
+    .stat{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:98px;
+      padding:10px 0 0;
+    }
+    .stat .label{
+      text-transform:uppercase;
+      font-size:12px;
+      letter-spacing:0.12em;
+      color:rgba(148,163,184,0.8);
+    }
+    .stat strong{
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:0.02em;
+    }
+    .runner-controls{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .runner-status{
+      background:rgba(15,118,110,0.14);
+      border:1px solid rgba(45,212,191,0.3);
+      border-radius:12px;
+      padding:14px 16px;
+      font-size:14px;
+      line-height:1.6;
+      color:#a5f3fc;
+    }
+    .list-card{
+      margin-top:24px;
+    }
+    .list-card h2{
+      margin-bottom:10px;
+    }
+    .task-list{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:10px;
+    }
+    .task{
+      border-radius:14px;
+      padding:18px 20px;
+      border:1px solid rgba(71,85,105,0.5);
+      background:rgba(15,23,42,0.6);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .task::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      opacity:0.1;
+      pointer-events:none;
+    }
+    .task.task-pending{border-left:5px solid var(--pending);}
+    .task.task-running{border-left:5px solid var(--running);}
+    .task.task-completed{border-left:5px solid var(--completed);}
+    .task-top{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      align-items:flex-start;
+    }
+    .task-text h3{
+      margin:0;
+      font-size:17px;
+      letter-spacing:-0.01em;
+    }
+    .task-meta{
+      display:block;
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .task-notes{
+      margin:0;
+      font-size:14px;
+      line-height:1.6;
+      color:rgba(226,232,240,0.78);
+      background:rgba(148,163,184,0.08);
+      border-radius:10px;
+      padding:10px 12px;
+    }
+    .status-chip{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:#0f172a;
+    }
+    .status-pending{background:rgba(249,115,22,0.85);}
+    .status-running{background:rgba(250,204,21,0.85);}
+    .status-completed{background:rgba(34,197,94,0.85);}
+    .task-progress{
+      height:8px;
+      border-radius:999px;
+      background:rgba(148,163,184,0.18);
+      overflow:hidden;
+    }
+    .task-progress-bar{
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,var(--accent),rgba(94,234,212,0.9));
+      transition:width 0.14s ease;
+    }
+    .task-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .empty{
+      text-align:center;
+      padding:38px 20px;
+      border-radius:14px;
+      border:1px dashed rgba(148,163,184,0.3);
+      color:rgba(148,163,184,0.72);
+      font-size:15px;
+    }
+    @media (max-width:720px){
+      body{padding:22px;}
+      main.wrapper{padding:24px;}
+      header h1{font-size:24px;}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrapper" role="main">
+    <header>
+      <h1>Sequential Task Runner</h1>
+      <p class="lead">Track your work and automatically run any remaining incomplete tasks one by one.</p>
+    </header>
+
+    <section class="grid">
+      <section class="card form-card" aria-labelledby="addTaskHeading">
+        <h2 id="addTaskHeading">Add a Task</h2>
+        <form id="taskForm">
+          <label for="taskTitle">Task title</label>
+          <input type="text" id="taskTitle" placeholder="Prepare weekly report" autocomplete="off" required>
+          <label for="taskNotes">Notes <span style="font-weight:500;color:rgba(148,163,184,0.9);text-transform:none;letter-spacing:0;">(optional)</span></label>
+          <textarea id="taskNotes" placeholder="Add any context you want to remember…"></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Add task</button>
+            <button type="button" class="btn ghost" id="clearCompletedBtn">Clear completed</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card runner-card" aria-labelledby="runnerHeading">
+        <h2 id="runnerHeading">Sequence runner</h2>
+        <div class="stats" aria-live="polite">
+          <div class="stat">
+            <span class="label">Pending</span>
+            <strong id="pendingCount">0</strong>
+          </div>
+          <div class="stat">
+            <span class="label">Running</span>
+            <strong id="runningCount">0</strong>
+          </div>
+          <div class="stat">
+            <span class="label">Completed</span>
+            <strong id="completedCount">0</strong>
+          </div>
+        </div>
+        <div class="runner-controls">
+          <button type="button" class="btn primary" id="runRemainingBtn">Run remaining tasks</button>
+          <button type="button" class="btn ghost" id="cancelRunBtn" disabled>Cancel run</button>
+        </div>
+        <div class="runner-status" id="runnerStatus" role="status" aria-live="polite">No sequence running. Add tasks and click “Run Remaining Tasks”.</div>
+      </section>
+    </section>
+
+    <section class="card list-card" aria-labelledby="taskListHeading">
+      <h2 id="taskListHeading">Task list</h2>
+      <div id="taskList" class="task-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const STORAGE_KEY = 'sequential-task-runner-v1';
+      const tasks = [];
+      let nextId = 1;
+      let isRunning = false;
+      let queue = [];
+      let queueIndex = 0;
+      let currentTaskId = null;
+      let progressInterval = null;
+
+      const taskForm = document.getElementById('taskForm');
+      const titleInput = document.getElementById('taskTitle');
+      const notesInput = document.getElementById('taskNotes');
+      const taskListEl = document.getElementById('taskList');
+      const runBtn = document.getElementById('runRemainingBtn');
+      const cancelBtn = document.getElementById('cancelRunBtn');
+      const pendingCountEl = document.getElementById('pendingCount');
+      const runningCountEl = document.getElementById('runningCount');
+      const completedCountEl = document.getElementById('completedCount');
+      const runnerStatusEl = document.getElementById('runnerStatus');
+      const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+
+      loadTasks();
+      renderTasks();
+      updateStats();
+      updateRunnerStatus('No sequence running. Add tasks and click “Run Remaining Tasks”.');
+
+      taskForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const title = titleInput.value.trim();
+        const notes = notesInput.value.trim();
+        if (!title) {
+          titleInput.focus();
+          return;
+        }
+        const newTask = {
+          id: nextId++,
+          title,
+          notes,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          progress: 0
+        };
+        tasks.push(newTask);
+        saveTasks();
+        renderTasks();
+        updateStats();
+        updateRunnerStatus(`Added “${title}” to the queue.`);
+        taskForm.reset();
+        titleInput.focus();
+      });
+
+      clearCompletedBtn.addEventListener('click', () => {
+        const before = tasks.length;
+        for (let i = tasks.length - 1; i >= 0; i -= 1) {
+          if (tasks[i].status === 'completed') {
+            tasks.splice(i, 1);
+          }
+        }
+        if (before === tasks.length) {
+          updateRunnerStatus('No completed tasks to clear.');
+          return;
+        }
+        if (isRunning) {
+          const newQueue = [];
+          let newIndex = queueIndex;
+          queue.forEach((taskId, position) => {
+            const exists = tasks.some(task => task.id === taskId);
+            if (exists) {
+              newQueue.push(taskId);
+            } else {
+              if (position < queueIndex) {
+                newIndex -= 1;
+              }
+              if (currentTaskId === taskId) {
+                currentTaskId = null;
+              }
+            }
+          });
+          queue = newQueue;
+          queueIndex = Math.min(Math.max(0, newIndex), queue.length);
+        }
+        saveTasks();
+        renderTasks();
+        updateStats();
+        updateRunnerStatus('Cleared completed tasks.');
+      });
+
+      runBtn.addEventListener('click', () => {
+        if (isRunning) {
+          return;
+        }
+        const remaining = tasks.filter(task => task.status !== 'completed');
+        if (remaining.length === 0) {
+          updateRunnerStatus('Nothing to run — all tasks are completed.');
+          return;
+        }
+        queue = remaining.map(task => task.id);
+        queueIndex = 0;
+        isRunning = true;
+        runBtn.disabled = true;
+        cancelBtn.disabled = false;
+        updateRunnerStatus(`Starting sequential run for ${remaining.length} task${remaining.length === 1 ? '' : 's'}...`);
+        advanceQueue();
+      });
+
+      cancelBtn.addEventListener('click', cancelRun);
+
+      taskListEl.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const id = Number(button.dataset.id);
+        if (Number.isNaN(id)) return;
+        const action = button.dataset.action;
+
+        if (action === 'complete') {
+          markTaskComplete(id);
+        } else if (action === 'reset') {
+          resetTask(id);
+        } else if (action === 'delete') {
+          deleteTask(id);
+        }
+      });
+
+      function markTaskComplete(id) {
+        const task = getTaskById(id);
+        if (!task || task.status === 'completed') return;
+        if (isRunning && currentTaskId === id) {
+          clearProgressTimer();
+          completeCurrentTask(false);
+          return;
+        }
+        setStatus(task, 'completed');
+        saveTasks();
+        renderTasks();
+        updateStats();
+        updateRunnerStatus(`Marked “${task.title}” as completed.`);
+      }
+
+      function resetTask(id) {
+        const task = getTaskById(id);
+        if (!task || task.status === 'pending') return;
+        if (isRunning && currentTaskId === id) {
+          updateRunnerStatus('Cannot reset the task while it is running. Cancel the run first.');
+          return;
+        }
+        setStatus(task, 'pending');
+        saveTasks();
+        renderTasks();
+        updateStats();
+        updateRunnerStatus(`Reset “${task.title}” to pending.`);
+      }
+
+      function deleteTask(id) {
+        const index = tasks.findIndex(task => task.id === id);
+        if (index === -1) return;
+        if (isRunning && currentTaskId === id) {
+          updateRunnerStatus('Cannot delete the task while it is running. Cancel the run first.');
+          return;
+        }
+        const queuePos = queue.indexOf(id);
+        const [removed] = tasks.splice(index, 1);
+        if (isRunning && queuePos !== -1) {
+          queue = queue.filter(taskId => taskId !== id);
+          if (queuePos < queueIndex) {
+            queueIndex = Math.max(0, queueIndex - 1);
+          }
+        }
+        saveTasks();
+        renderTasks();
+        updateStats();
+        if (removed) {
+          updateRunnerStatus(`Removed “${removed.title}” from the list.`);
+        }
+      }
+
+      function advanceQueue() {
+        clearProgressTimer();
+        currentTaskId = null;
+
+        if (!isRunning) {
+          return;
+        }
+
+        while (queueIndex < queue.length) {
+          const id = queue[queueIndex];
+          const task = getTaskById(id);
+          if (!task) {
+            queueIndex += 1;
+            continue;
+          }
+          if (task.status === 'completed') {
+            queueIndex += 1;
+            continue;
+          }
+          currentTaskId = id;
+          startTask(task);
+          return;
+        }
+        finishRun();
+      }
+
+      function startTask(task) {
+        setStatus(task, 'running');
+        task.progress = 0;
+        saveTasks();
+        renderTasks();
+        updateStats();
+
+        const total = queue.length;
+        const ordinal = queueIndex + 1;
+        updateRunnerStatus(`Running task ${ordinal} of ${total}: “${task.title}”`);
+
+        const step = 100 / 28;
+        progressInterval = setInterval(() => {
+          const current = getTaskById(task.id);
+          if (!current || current.status !== 'running') {
+            clearProgressTimer();
+            return;
+          }
+          current.progress = Math.min(100, (current.progress || 0) + step);
+          renderTasks();
+          if (current.progress >= 100) {
+            clearProgressTimer();
+            completeCurrentTask(true);
+          }
+        }, 140);
+      }
+
+      function completeCurrentTask(auto) {
+        const id = currentTaskId;
+        const task = getTaskById(id);
+        const total = queue.length;
+        const ordinal = queueIndex + 1;
+
+        if (task) {
+          setStatus(task, 'completed');
+          task.progress = 100;
+        }
+
+        saveTasks();
+        renderTasks();
+        updateStats();
+
+        if (task) {
+          updateRunnerStatus(`${auto ? 'Finished' : 'Completed'} task ${ordinal} of ${total}: “${task.title}”.`);
+        } else {
+          updateRunnerStatus(`${auto ? 'Finished' : 'Completed'} task ${ordinal} of ${total}.`);
+        }
+
+        queueIndex += 1;
+        currentTaskId = null;
+
+        if (!isRunning) {
+          return;
+        }
+
+        setTimeout(() => advanceQueue(), 420);
+      }
+
+      function finishRun() {
+        isRunning = false;
+        queue = [];
+        queueIndex = 0;
+        currentTaskId = null;
+        clearProgressTimer();
+        runBtn.disabled = tasks.filter(task => task.status !== 'completed').length === 0;
+        cancelBtn.disabled = true;
+
+        const remaining = tasks.filter(task => task.status !== 'completed').length;
+        const message = remaining === 0
+          ? 'Run finished. All tasks have been completed.'
+          : `Run finished. ${remaining} task${remaining === 1 ? '' : 's'} remain pending.`;
+        updateRunnerStatus(message);
+
+        saveTasks();
+        renderTasks();
+        updateStats();
+      }
+
+      function cancelRun() {
+        if (!isRunning) return;
+        isRunning = false;
+        clearProgressTimer();
+        if (currentTaskId !== null) {
+          const task = getTaskById(currentTaskId);
+          if (task && task.status === 'running') {
+            setStatus(task, 'pending');
+          }
+        }
+        queue = [];
+        queueIndex = 0;
+        currentTaskId = null;
+        runBtn.disabled = tasks.filter(task => task.status !== 'completed').length === 0;
+        cancelBtn.disabled = true;
+        saveTasks();
+        renderTasks();
+        updateStats();
+        updateRunnerStatus('Run cancelled. Tasks left in pending state.');
+      }
+
+      function clearProgressTimer() {
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
+      }
+
+      function getTaskById(id) {
+        return tasks.find(task => task.id === id);
+      }
+
+      function setStatus(task, status) {
+        task.status = status;
+        if (status === 'completed') {
+          task.progress = 100;
+        } else if (status === 'running') {
+          task.progress = task.progress || 0;
+        } else {
+          task.progress = 0;
+        }
+      }
+
+      function renderTasks() {
+        taskListEl.innerHTML = '';
+        if (tasks.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = 'No tasks yet. Add one using the form above.';
+          taskListEl.appendChild(empty);
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        tasks.forEach(task => {
+          fragment.appendChild(renderTask(task));
+        });
+        taskListEl.appendChild(fragment);
+      }
+
+      function renderTask(task) {
+        const article = document.createElement('article');
+        article.className = `task task-${task.status}`;
+        article.dataset.id = task.id;
+
+        const top = document.createElement('div');
+        top.className = 'task-top';
+
+        const textWrap = document.createElement('div');
+        textWrap.className = 'task-text';
+
+        const title = document.createElement('h3');
+        title.textContent = task.title;
+        textWrap.appendChild(title);
+
+        const meta = document.createElement('span');
+        meta.className = 'task-meta';
+        meta.textContent = formatMeta(task);
+        textWrap.appendChild(meta);
+
+        top.appendChild(textWrap);
+
+        const statusChip = document.createElement('span');
+        statusChip.className = `status-chip status-${task.status}`;
+        statusChip.textContent = statusLabel(task.status);
+        top.appendChild(statusChip);
+
+        article.appendChild(top);
+
+        if (task.notes) {
+          const notes = document.createElement('p');
+          notes.className = 'task-notes';
+          notes.textContent = task.notes;
+          article.appendChild(notes);
+        }
+
+        if (task.status === 'running') {
+          const progress = document.createElement('div');
+          progress.className = 'task-progress';
+          const bar = document.createElement('div');
+          bar.className = 'task-progress-bar';
+          bar.style.width = `${Math.min(task.progress || 0, 100)}%`;
+          progress.appendChild(bar);
+          article.appendChild(progress);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'task-actions';
+
+        const completeBtn = createActionButton('Complete', 'complete', task.id, task.status === 'completed' || task.status === 'running');
+        actions.appendChild(completeBtn);
+
+        const resetBtn = createActionButton('Reset', 'reset', task.id, task.status === 'pending' || task.status === 'running');
+        actions.appendChild(resetBtn);
+
+        const deleteBtn = createActionButton('Delete', 'delete', task.id, task.status === 'running', 'danger');
+        actions.appendChild(deleteBtn);
+
+        article.appendChild(actions);
+
+        return article;
+      }
+
+      function createActionButton(label, action, id, disabled, variant) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const classes = ['btn', 'small'];
+        if (variant) classes.push(variant);
+        btn.className = classes.join(' ');
+        btn.dataset.action = action;
+        btn.dataset.id = id;
+        btn.textContent = label;
+        if (disabled) {
+          btn.disabled = true;
+        }
+        return btn;
+      }
+
+      function statusLabel(status) {
+        switch (status) {
+          case 'completed':
+            return 'Completed';
+          case 'running':
+            return 'Running';
+          default:
+            return 'Pending';
+        }
+      }
+
+      function formatMeta(task) {
+        if (!task.createdAt) return `Task #${task.id}`;
+        const date = new Date(task.createdAt);
+        if (Number.isNaN(date.valueOf())) return `Task #${task.id}`;
+        const datePart = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const timePart = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        return `Added ${datePart} · ${timePart}`;
+      }
+
+      function updateStats() {
+        const counts = tasks.reduce((acc, task) => {
+          acc[task.status] = (acc[task.status] || 0) + 1;
+          return acc;
+        }, {});
+        pendingCountEl.textContent = counts.pending || 0;
+        runningCountEl.textContent = counts.running || 0;
+        completedCountEl.textContent = counts.completed || 0;
+
+        const remaining = tasks.filter(task => task.status !== 'completed').length;
+        if (!isRunning) {
+          runBtn.disabled = remaining === 0;
+        }
+        cancelBtn.disabled = !isRunning;
+      }
+
+      function updateRunnerStatus(text) {
+        runnerStatusEl.textContent = text;
+      }
+
+      function saveTasks() {
+        const snapshot = tasks.map(({ id, title, notes, status, createdAt }) => ({
+          id,
+          title,
+          notes,
+          status,
+          createdAt
+        }));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        } catch (err) {
+          console.warn('Unable to persist tasks', err);
+        }
+      }
+
+      function loadTasks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return;
+          parsed.forEach(item => {
+            const id = typeof item.id === 'number' ? item.id : Number(item.id);
+            tasks.push({
+              id: Number.isFinite(id) ? id : nextId,
+              title: item.title || 'Untitled task',
+              notes: item.notes || '',
+              status: item.status === 'completed' ? 'completed' : 'pending',
+              createdAt: item.createdAt || new Date().toISOString(),
+              progress: 0
+            });
+          });
+          const maxId = tasks.reduce((max, task) => Math.max(max, task.id), 0);
+          nextId = Math.max(maxId + 1, nextId);
+        } catch (err) {
+          console.warn('Unable to load tasks from storage', err);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
