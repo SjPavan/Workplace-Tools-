@@ -142,14 +142,28 @@
 
     function convertToSentenceCase(str) {
         if (!str) return '';
-        const sentences = str.toLowerCase().split(/([.!?]+)/);
-        return sentences.map(sentence => {
-            const trimmed = sentence.trim();
-            if (trimmed) {
-                return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        const lower = str.toLowerCase();
+        let result = '';
+        let capitalizeNext = true;
+        const bridgeChars = ['"', "'", '“', '”', '‘', '’', '«', '»', '‹', '›', '(', ')', '[', ']', '{', '}', '-', '–', '—'];
+
+        for (const char of lower) {
+            if (capitalizeNext && /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(char)) {
+                result += char.toUpperCase();
+                capitalizeNext = false;
+                continue;
             }
-            return sentence;
-        }).join('');
+
+            result += char;
+
+            if (/[.!?]/.test(char)) {
+                capitalizeNext = true;
+            } else if (!/\s/.test(char) && !bridgeChars.includes(char)) {
+                capitalizeNext = false;
+            }
+        }
+
+        return result;
     }
 
     function convertToCamelCase(str) {
