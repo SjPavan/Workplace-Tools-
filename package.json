@@ -1,0 +1,20 @@
+{
+  "name": "workplace-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:integration && npm run test:worker && npm run test:frontend && npm run test:mobile && npm run test:contract",
+    "test:unit": "vitest run tests/unit --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test:worker": "node scripts/run-worker-tests.js",
+    "test:frontend": "node scripts/run-playwright-tests.js",
+    "test:mobile": "node scripts/run-detox-tests.js",
+    "test:contract": "node scripts/run-contract-tests.js"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.1.0",
+    "jsdom": "^24.0.0",
+    "vitest": "^1.1.0"
+  }
+}
