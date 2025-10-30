@@ -1,0 +1,37 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# Node / React Native
+node_modules/
+package-lock.json
+yarn-error.log
+npm-debug.log
+
+# React Native iOS
+ios/Pods/
+ios/build/
+ios/*.xcodeproj/project.xcworkspace/
+ios/*.xcworkspace/
+ios/*.xcodeproj/xcuserdata/
+
+# React Native Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/build/
+
+# Cache
+.expo/
+Expo.plist
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/assets/sourcemaps/
+metro-cache/
+.idea/
+
+# Env
+.env
+.env.*
