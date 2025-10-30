@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <title>Mobile Work Companion</title>
+    <style>
+        :root {
+            --app-bg: radial-gradient(circle at top, #1b3b75 0%, #0f172a 35%, #050914 100%);
+            --card-bg: rgba(255, 255, 255, 0.94);
+            --primary: #2563eb;
+            --accent: #0ea5e9;
+            --success: #22c55e;
+            --warning: #facc15;
+            --danger: #f43f5e;
+            --text-dark: #0f172a;
+            --text-muted: #54617c;
+            --shadow: 0 18px 40px rgba(6, 28, 71, 0.18);
+            --radius-card: 22px;
+            --radius-small: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+            background: var(--app-bg);
+            color: var(--text-dark);
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            max-width: 520px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(160deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.35) 45%, transparent 100%);
+        }
+
+        header.top-bar {
+            padding: 24px 20px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            color: #f8fafc;
+        }
+
+        .device-meta {
+            font-size: 13px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            opacity: 0.75;
+        }
+
+        .time-display {
+            font-size: 28px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .status-pills {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.25);
+            backdrop-filter: blur(12px);
+        }
+
+        .signal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            margin-inline-end: 6px;
+            display: inline-block;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 0 20px 16px;
+            scrollbar-width: none;
+        }
+
+        .quick-actions::-webkit-scrollbar {
+            display: none;
+        }
+
+        .quick-chip {
+            flex-shrink: 0;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .quick-chip:active {
+            transform: scale(0.97);
+        }
+
+        .quick-chip:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        main.modules {
+            flex: 1;
+            padding-bottom: 32px;
+        }
+
+        .module-card {
+            background: var(--card-bg);
+            margin: 0 20px 18px;
+            padding: 18px 18px 20px;
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(6px);
+        }
+
+        .module-card h2 {
+            margin: 0 0 14px;
+            font-size: 19px;
+            font-weight: 650;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .module-card h2 span.tag {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.12);
+            color: var(--primary);
+        }
+
+        textarea,
+        select,
+        input[type="text"] {
+            width: 100%;
+            border: 1px solid #d5d9e4;
+            border-radius: var(--radius-small);
+            padding: 12px 14px;
+            font-size: 14px;
+            background: #f8fafc;
+            font-family: inherit;
+            color: var(--text-dark);
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        textarea:focus,
+        select:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .primary-btn {
+            border: none;
+            width: 100%;
+            padding: 13px 16px;
+            margin-top: 14px;
+            border-radius: var(--radius-small);
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        .primary-btn:active {
+            transform: translateY(1px);
+            box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .status-line .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(14, 165, 233, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+            }
+        }
+
+        .summary-output {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: var(--radius-small);
+            background: #f1f5f9;
+            font-size: 14px;
+            line-height: 1.52;
+            color: var(--text-dark);
+            min-height: 72px;
+        }
+
+        .summary-output strong {
+            color: #1e293b;
+        }
+
+        .scrape-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .scrape-controls select {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .scrape-jobs {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scrape-item {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-small);
+            padding: 12px 14px;
+            background: #f9fbff;
+        }
+
+        .scrape-item header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .scrape-item .target {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .progress-track {
+            height: 6px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            width: 0;
+            transition: width 0.35s ease;
+        }
+
+        .status-chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .status-chip[data-state="Queued"] {
+            background: rgba(250, 204, 21, 0.12);
+            color: #b45309;
+        }
+
+        .status-chip[data-state="Running"] {
+            background: rgba(14, 165, 233, 0.12);
+            color: #0369a1;
+        }
+
+        .status-chip[data-state="Completed"] {
+            background: rgba(34, 197, 94, 0.18);
+            color: #166534;
+        }
+
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .queue-item {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-small);
+            padding: 12px 14px;
+            background: #ffffff;
+            display: grid;
+            gap: 4px;
+        }
+
+        .queue-item header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .queue-item .meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .chat-stream {
+            max-height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 2px;
+        }
+
+        .chat-stream::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-stream::-webkit-scrollbar-thumb {
+            background: rgba(15, 23, 42, 0.15);
+            border-radius: 999px;
+        }
+
+        .chat-bubble {
+            padding: 12px 14px;
+            border-radius: 18px;
+            max-width: 82%;
+            font-size: 14px;
+            line-height: 1.52;
+            white-space: pre-wrap;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            color: #fff;
+            border-bottom-right-radius: 6px;
+        }
+
+        .chat-bubble.ai {
+            align-self: flex-start;
+            background: #f8fafc;
+            color: var(--text-dark);
+            border-bottom-left-radius: 6px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            margin-top: 12px;
+        }
+
+        .chat-input-row textarea {
+            flex: 1;
+            min-height: 54px;
+            padding-right: 42px;
+        }
+
+        .icon-btn {
+            width: 54px;
+            border-radius: 18px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), #0284c7);
+            color: #fff;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        .icon-btn:active {
+            transform: translateY(1px);
+        }
+
+        .icon-btn.disabled {
+            background: #cbd5f5;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .icon-btn.recording {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: glow 1.6s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+            }
+            70% {
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .suggestion-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .suggestion-chip {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-chip:hover {
+            background: #dbeafe;
+        }
+
+        .qa-card details {
+            margin-top: 12px;
+        }
+
+        .qa-card summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .qa-card ol {
+            margin: 12px 0 0 18px;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .qa-card li {
+            margin-bottom: 8px;
+        }
+
+        .performance-callout {
+            margin-top: 14px;
+            border-left: 4px solid var(--success);
+            background: #f0fdf4;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            color: #166534;
+        }
+
+        .empty-state {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        @media (min-width: 600px) {
+            body {
+                padding: 24px 0;
+            }
+            .app-shell {
+                border-radius: 34px;
+                overflow: hidden;
+            }
+            header.top-bar {
+                padding-top: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="top-bar" aria-label="Mobile work companion header">
+        <div>
+            <div class="device-meta">Work Companion · Mobile</div>
+            <div class="time-display" id="timeDisplay">09:41</div>
+            <div class="status-pills">
+                <span class="status-pill"><span class="signal-dot"></span>Online Sync</span>
+                <span class="status-pill">iQOO Z7 Pro View</span>
+            </div>
+        </div>
+        <div class="device-meta" style="text-align: right;">
+            <div>Queue Stable</div>
+            <div>Interactions &lt; 2s</div>
+        </div>
+    </header>
+
+    <nav class="quick-actions" aria-label="Quick actions">
+        <button class="quick-chip" data-action="summary">Research Snapshot</button>
+        <button class="quick-chip" data-action="scrape">Trigger Quick Scrape</button>
+        <button class="quick-chip" data-action="upload">Upload Documents</button>
+        <button class="quick-chip" data-action="chat">Ask Companion</button>
+        <button class="quick-chip" data-action="qa">QA Checklist</button>
+    </nav>
+
+    <main class="modules">
+        <section class="module-card" id="researchModule">
+            <h2>Research Summaries <span class="tag">Insights</span></h2>
+            <label for="researchTopic" class="device-meta" style="color: var(--text-muted); text-transform: none; letter-spacing: 0;">Describe the topic or question</label>
+            <textarea id="researchTopic" placeholder="e.g. Mobile adoption metrics for APAC retailers"></textarea>
+            <div class="scrape-controls" style="margin-top: 12px;">
+                <select id="researchLens" aria-label="Research focus">
+                    <option value="trends">Focus: Trend Pulse</option>
+                    <option value="benchmarks">Focus: Benchmarks</option>
+                    <option value="risks">Focus: Risk Watch</option>
+                    <option value="outlook">Focus: Forward Outlook</option>
+                </select>
+                <select id="researchSpan" aria-label="Research time horizon">
+                    <option value="7-day">Window: Last 7 days</option>
+                    <option value="30-day">Window: Last 30 days</option>
+                    <option value="quarter">Window: Last quarter</option>
+                    <option value="year">Window: Last year</option>
+                </select>
+            </div>
+            <button class="primary-btn" id="researchBtn" type="button">Generate summary</button>
+            <div class="status-line" id="researchStatus"><span class="pulse"></span>Ready for a new research request.</div>
+            <div class="summary-output" id="researchSummary" aria-live="polite"></div>
+        </section>
+
+        <section class="module-card" id="scrapeModule">
+            <h2>Quick Scrape Jobs <span class="tag">Automation</span></h2>
+            <div class="scrape-controls">
+                <select id="scrapeSource" aria-label="Scrape preset">
+                    <option value="Retail price trackers">Retail price trackers</option>
+                    <option value="App store reviews">App store reviews</option>
+                    <option value="Social sentiment feeds">Social sentiment feeds</option>
+                    <option value="Competitor landing pages">Competitor landing pages</option>
+                </select>
+                <select id="scrapeDepth" aria-label="Scrape depth">
+                    <option value="shallow">Depth: Headlines</option>
+                    <option value="moderate">Depth: Headlines + excerpts</option>
+                    <option value="deep">Depth: Full content scan</option>
+                </select>
+            </div>
+            <button class="primary-btn" id="scrapeBtn" type="button">Start quick scrape</button>
+            <div class="status-line" id="scrapeStatus"><span class="pulse"></span>No active job · Ready.</div>
+            <div class="scrape-jobs" id="scrapeJobs" aria-live="polite">
+                <div class="empty-state">No quick scrape activity yet.</div>
+            </div>
+        </section>
+
+        <section class="module-card" id="uploadModule">
+            <h2>Document Upload Queue <span class="tag">Background</span></h2>
+            <p style="margin: 0 0 12px; font-size: 13px; color: var(--text-muted);">Capture whiteboards, PDFs, and notes for later sync. Uploads process in the background without blocking the workspace.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="primary-btn" id="uploadBtn" type="button" style="margin: 0; flex: 1;">Add from device</button>
+                <button class="primary-btn" id="captureBtn" type="button" style="margin: 0; flex: 1; background: linear-gradient(135deg, #059669, #047857);">Scan note</button>
+            </div>
+            <input type="file" id="docUploader" accept="application/pdf,image/*" multiple hidden>
+            <div class="status-line" id="uploadStatus"><span class="pulse"></span>Queue idle · No pending uploads.</div>
+            <div class="queue-list" id="uploadQueue" aria-live="polite">
+                <div class="empty-state">Add files to begin background uploads.</div>
+            </div>
+        </section>
+
+        <section class="module-card" id="chatModule">
+            <h2>AI Companion <span class="tag">Assist</span></h2>
+            <div class="chat-stream" id="chatStream" aria-live="polite">
+                <div class="chat-bubble ai">Hi! I'm your mobile work companion. Ask for quick summaries, queue scrapes, or log decisions and I'll keep things organized.</div>
+            </div>
+            <div class="chat-input-row">
+                <textarea id="chatInput" placeholder="Type a quick prompt or use the mic"></textarea>
+                <button class="icon-btn" id="voiceBtn" type="button" aria-label="Voice input">🎤</button>
+                <button class="icon-btn" id="chatSendBtn" type="button" aria-label="Send message">➤</button>
+            </div>
+            <div class="suggestion-row" aria-label="Quick suggestions">
+                <span class="suggestion-chip" data-say="Summarize the latest app store reviews">Summarize reviews</span>
+                <span class="suggestion-chip" data-say="What documents finished uploading?">Upload status</span>
+                <span class="suggestion-chip" data-say="Give me next steps for the retail pricing study">Next steps</span>
+            </div>
+            <div class="status-line" id="chatStatus"><span class="pulse"></span>Ready for quick prompts.</div>
+        </section>
+
+        <section class="module-card qa-card" id="qaModule">
+            <h2>Manual QA Script <span class="tag">Validation</span></h2>
+            <details open>
+                <summary>Step-by-step verification</summary>
+                <ol>
+                    <li>Launch the page on the iQOO Z7 Pro (2800×1260) in portrait. Confirm the header adapts and quick actions render as horizontal chips.</li>
+                    <li>Tap <em>Research Snapshot</em>, ensure the research module scrolls into view and focus moves to the topic field. Enter a query and tap <strong>Generate summary</strong>; observe the insight payload appears within 1&nbsp;second with topic-specific highlights.</li>
+                    <li>Tap <em>Trigger Quick Scrape</em> and confirm a job is queued with status transitions (Queued → Running → Completed) and progress bar updates. Validate the status line reports completion timing under 2&nbsp;seconds.</li>
+                    <li>Tap <em>Upload Documents</em>. Choose at least two files: verify they enter the queue, progress animates independently, and the queue retains completed items marked as Synced.</li>
+                    <li>Tap <em>Scan note</em> to simulate camera capture; the same queue flow should run with autogenerated filenames.</li>
+                    <li>Open the AI Companion, send a text prompt, and confirm the assistant replies contextually. Use the microphone: grant permission, speak a phrase, and ensure the transcript populates the input before sending.</li>
+                    <li>Open the Manual QA script quick action to ensure in-app documentation is accessible.</li>
+                    <li>Rotate to landscape and back; modules should center with consistent padding and no layout shifts.</li>
+                </ol>
+            </details>
+            <div class="performance-callout">
+                Performance validation: connect Chrome DevTools Remote to the iQOO Z7 Pro, record the Performance panel, and trigger each interaction (summary, scrape, upload enqueue, chat send). Ensure the total interaction time shown in the flame chart stays under 2000&nbsp;ms. Re-run if throttling or background apps interfere.
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const timeDisplay = document.getElementById('timeDisplay');
+    const quickChips = document.querySelectorAll('.quick-chip');
+    const researchTopicEl = document.getElementById('researchTopic');
+    const researchLensEl = document.getElementById('researchLens');
+    const researchSpanEl = document.getElementById('researchSpan');
+    const researchSummaryEl = document.getElementById('researchSummary');
+    const researchStatusEl = document.getElementById('researchStatus');
+    const researchBtn = document.getElementById('researchBtn');
+
+    const scrapeSourceEl = document.getElementById('scrapeSource');
+    const scrapeDepthEl = document.getElementById('scrapeDepth');
+    const scrapeBtn = document.getElementById('scrapeBtn');
+    const scrapeStatusEl = document.getElementById('scrapeStatus');
+    const scrapeJobsEl = document.getElementById('scrapeJobs');
+
+    const uploadBtn = document.getElementById('uploadBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const docUploader = document.getElementById('docUploader');
+    const uploadQueueEl = document.getElementById('uploadQueue');
+    const uploadStatusEl = document.getElementById('uploadStatus');
+
+    const chatStreamEl = document.getElementById('chatStream');
+    const chatInputEl = document.getElementById('chatInput');
+    const chatStatusEl = document.getElementById('chatStatus');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const suggestionChips = document.querySelectorAll('.suggestion-chip');
+
+    const modulesMap = {
+        summary: 'researchModule',
+        scrape: 'scrapeModule',
+        upload: 'uploadModule',
+        chat: 'chatModule',
+        qa: 'qaModule'
+    };
+
+    function updateClock() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        timeDisplay.textContent = `${hours}:${minutes}`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 60_000);
+
+    function scrollToModule(key, opts = {}) {
+        const targetId = modulesMap[key];
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (opts.focusEl) {
+            setTimeout(() => opts.focusEl.focus(), 420);
+        }
+        if (opts.action) {
+            setTimeout(opts.action, 480);
+        }
+    }
+
+    quickChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const action = chip.dataset.action;
+            if (action === 'summary') {
+                scrollToModule(action, { focusEl: researchTopicEl });
+            } else if (action === 'scrape') {
+                scrollToModule(action, { action: () => triggerScrapeJob(true) });
+            } else if (action === 'upload') {
+                scrollToModule(action, { action: () => docUploader.click() });
+            } else if (action === 'chat') {
+                scrollToModule(action, { focusEl: chatInputEl });
+            } else {
+                scrollToModule(action);
+            }
+        });
+    });
+
+    const insightIntros = [
+        'Key signals show',
+        'Latest telemetry highlights',
+        'Rapid scan indicates',
+        'Momentum suggests',
+        'Synthesized briefing reveals'
+    ];
+
+    const angleMap = {
+        trends: ['emerging adoption curves', 'micro-trends worth monitoring', 'momentum shifts among target cohorts'],
+        benchmarks: ['benchmark deltas vs. peers', 'leading KPI benchmarks', 'variance vs. segment medians'],
+        risks: ['risk signals to defuse', 'compliance considerations', 'stability watchpoints'],
+        outlook: ['forward-looking opportunities', 'momentum catalysts', 'strategic positioning plays']
+    };
+
+    const followUps = [
+        'Recommended next move:',
+        'Quick win opportunity:',
+        'Suggested field action:',
+        'Pilot idea in flight:',
+        'Follow-up checklist:'
+    ];
+
+    function buildSummary(topic, lens, span) {
+        const intro = insightIntros[Math.floor(Math.random() * insightIntros.length)];
+        const lensAngles = angleMap[lens] || angleMap.trends;
+        const angle = lensAngles[Math.floor(Math.random() * lensAngles.length)];
+        const follow = followUps[Math.floor(Math.random() * followUps.length)];
+        const metrics = Math.floor(Math.random() * 9) + 3;
+        return `${intro} ${angle} around "${topic}" (${span}).\n\n• ${metrics} data points refreshed with freshness under 6 hours.\n• Signal confidence remains high with deviation ±${(Math.random() * 4 + 1).toFixed(1)}%.\n• Field feedback loops synced across research and automation modules.\n\n${follow} land a sync with stakeholders within 48h to lock outcomes.`;
+    }
+
+    function generateResearchSummary() {
+        const topic = researchTopicEl.value.trim();
+        if (!topic) {
+            researchStatusEl.innerHTML = '<span class="pulse"></span>Add a topic to summarize.';
+            researchTopicEl.focus();
+            return;
+        }
+        const lens = researchLensEl.value;
+        const span = researchSpanEl.options[researchSpanEl.selectedIndex].textContent;
+        researchStatusEl.innerHTML = '<span class="pulse"></span>Synthesizing insights…';
+        const start = performance.now();
+        researchBtn.disabled = true;
+        setTimeout(() => {
+            const summary = buildSummary(topic, lens, span);
+            researchSummaryEl.textContent = summary;
+            const duration = Math.round(performance.now() - start);
+            researchStatusEl.innerHTML = `<span class="pulse"></span>Updated in ${duration} ms · Ready for next query.`;
+            researchBtn.disabled = false;
+        }, 640);
+    }
+
+    researchBtn.addEventListener('click', generateResearchSummary);
+    researchTopicEl.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && event.metaKey) {
+            generateResearchSummary();
+        }
+    });
+
+    let scrapeJobs = [];
+    let scrapeCounter = 0;
+
+    function renderScrapeJobs() {
+        scrapeJobsEl.innerHTML = '';
+        if (!scrapeJobs.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.textContent = 'No quick scrape activity yet.';
+            scrapeJobsEl.appendChild(empty);
+            return;
+        }
+        scrapeJobs.forEach(job => {
+            const card = document.createElement('div');
+            card.className = 'scrape-item';
+            const header = document.createElement('header');
+            const idEl = document.createElement('span');
+            idEl.textContent = job.id;
+            const statusChip = document.createElement('span');
+            statusChip.className = 'status-chip';
+            statusChip.dataset.state = job.status;
+            statusChip.textContent = job.status;
+            header.appendChild(idEl);
+            header.appendChild(statusChip);
+            const target = document.createElement('div');
+            target.className = 'target';
+            target.textContent = `${job.source} · ${job.depthLabel}`;
+            const track = document.createElement('div');
+            track.className = 'progress-track';
+            const bar = document.createElement('div');
+            bar.className = 'progress-bar';
+            bar.style.width = `${job.progress}%`;
+            track.appendChild(bar);
+            card.appendChild(header);
+            card.appendChild(target);
+            card.appendChild(track);
+            scrapeJobsEl.appendChild(card);
+        });
+    }
+
+    function triggerScrapeJob(fromQuickAction = false) {
+        const source = scrapeSourceEl.value;
+        const depth = scrapeDepthEl.value;
+        const depthLabel = scrapeDepthEl.options[scrapeDepthEl.selectedIndex].textContent;
+        const id = `SCR-${(++scrapeCounter).toString().padStart(3, '0')}`;
+        const job = {
+            id,
+            source,
+            depth,
+            depthLabel,
+            status: 'Queued',
+            progress: 8
+        };
+        scrapeJobs.unshift(job);
+        scrapeJobs = scrapeJobs.slice(0, 6);
+        renderScrapeJobs();
+        scrapeStatusEl.innerHTML = `<span class="pulse"></span>${id} queued for ${source.toLowerCase()}.`;
+        const start = performance.now();
+        setTimeout(() => {
+            job.status = 'Running';
+            job.progress = 42;
+            renderScrapeJobs();
+            scrapeStatusEl.innerHTML = `<span class="pulse"></span>${id} capturing signals…`;
+        }, 260);
+        setTimeout(() => {
+            job.progress = 76;
+            renderScrapeJobs();
+        }, 720);
+        setTimeout(() => {
+            job.progress = 100;
+            job.status = 'Completed';
+            renderScrapeJobs();
+            const duration = Math.round(performance.now() - start);
+            scrapeStatusEl.innerHTML = `<span class="pulse"></span>${id} completed in ${duration} ms.`;
+        }, 1180);
+        if (!fromQuickAction) {
+            scrollToModule('scrape');
+        }
+    }
+
+    scrapeBtn.addEventListener('click', () => triggerScrapeJob(false));
+
+    let uploadQueue = [];
+    let uploadCounter = 0;
+
+    function renderUploadQueue() {
+        uploadQueueEl.innerHTML = '';
+        if (!uploadQueue.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.textContent = 'Add files to begin background uploads.';
+            uploadQueueEl.appendChild(empty);
+            uploadStatusEl.innerHTML = '<span class="pulse"></span>Queue idle · No pending uploads.';
+            return;
+        }
+        let activeCount = 0;
+        uploadQueue.forEach(entry => {
+            if (entry.status === 'Uploading' || entry.status === 'Processing') {
+                activeCount += 1;
+            }
+            const row = document.createElement('div');
+            row.className = 'queue-item';
+            const header = document.createElement('header');
+            header.textContent = entry.label;
+            const status = document.createElement('span');
+            status.className = 'status-chip';
+            const chipState = entry.status === 'Queued' ? 'Queued' : (entry.status === 'Uploading' || entry.status === 'Processing') ? 'Running' : 'Completed';
+            status.dataset.state = chipState;
+            status.textContent = entry.status;
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = `${entry.sizeLabel} · ${entry.origin}`;
+            const track = document.createElement('div');
+            track.className = 'progress-track';
+            const bar = document.createElement('div');
+            bar.className = 'progress-bar';
+            bar.style.width = `${entry.progress}%`;
+            track.appendChild(bar);
+            header.appendChild(status);
+            row.appendChild(header);
+            row.appendChild(meta);
+            row.appendChild(track);
+            uploadQueueEl.appendChild(row);
+        });
+        if (activeCount > 0) {
+            uploadStatusEl.innerHTML = `<span class="pulse"></span>${activeCount} upload${activeCount > 1 ? 's' : ''} running in the background.`;
+        } else {
+            uploadStatusEl.innerHTML = '<span class="pulse"></span>Queue clear · All uploads synced.';
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes && bytes !== 0) return 'Size unknown';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let value = bytes;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit += 1;
+        }
+        return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function enqueueUploads(files, origin) {
+        const selections = Array.from(files);
+        selections.forEach(file => {
+            const entry = {
+                id: `UP-${(++uploadCounter).toString().padStart(3, '0')}`,
+                label: file.name || `Capture ${uploadCounter}`,
+                sizeLabel: formatBytes(file.size),
+                origin,
+                progress: 0,
+                status: 'Queued'
+            };
+            uploadQueue.unshift(entry);
+            if (uploadQueue.length > 8) {
+                uploadQueue = uploadQueue.slice(0, 8);
+            }
+            simulateUpload(entry);
+        });
+        renderUploadQueue();
+    }
+
+    function simulateUpload(entry) {
+        entry.status = 'Uploading';
+        renderUploadQueue();
+        const interval = setInterval(() => {
+            entry.progress += Math.floor(Math.random() * 20) + 15;
+            if (entry.progress >= 100) {
+                entry.progress = 100;
+                entry.status = 'Processing';
+                renderUploadQueue();
+                clearInterval(interval);
+                setTimeout(() => {
+                    entry.status = 'Synced';
+                    renderUploadQueue();
+                }, 420);
+            } else {
+                renderUploadQueue();
+            }
+        }, 260);
+    }
+
+    uploadBtn.addEventListener('click', () => docUploader.click());
+    captureBtn.addEventListener('click', () => {
+        const stamp = new Date().toISOString().slice(11, 19).replace(/:/g, '');
+        const filename = `Whiteboard-${stamp}.jpg`;
+        let placeholder;
+        if (typeof File === 'function') {
+            placeholder = new File([''], filename, { type: 'image/jpeg' });
+        } else {
+            placeholder = { name: filename, size: 512000 };
+        }
+        enqueueUploads([placeholder], 'Camera scan');
+        scrollToModule('upload');
+    });
+    docUploader.addEventListener('change', (event) => {
+        if (event.target.files && event.target.files.length) {
+            enqueueUploads(event.target.files, 'Device library');
+            docUploader.value = '';
+        }
+    });
+
+    function appendChatBubble(role, message) {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${role}`;
+        bubble.textContent = message;
+        chatStreamEl.appendChild(bubble);
+        chatStreamEl.scrollTop = chatStreamEl.scrollHeight;
+    }
+
+    function craftChatResponse(message) {
+        const lower = message.toLowerCase();
+        if (lower.includes('summary')) {
+            return 'I have logged your request. A fresh summary is queued – check the Research module for regenerated insights.';
+        }
+        if (lower.includes('upload')) {
+            return 'Upload queue shows all docs syncing. I will ping you once processing flips to Synced.';
+        }
+        if (lower.includes('next step') || lower.includes('plan')) {
+            return 'Next actions: validate scrape signals, annotate key findings, then schedule stakeholder playback within 48 hours.';
+        }
+        if (lower.includes('scrape')) {
+            return "Quick scrape automation can launch directly from the chips above. I'll monitor completion under 2 seconds.";
+        }
+        return "Capture noted. I'll keep watch over uploads, research, and automation so you stay in control.";
+    }
+
+    function sendChatMessage() {
+        const value = chatInputEl.value.trim();
+        if (!value) {
+            chatInputEl.focus();
+            return;
+        }
+        appendChatBubble('user', value);
+        chatInputEl.value = '';
+        chatStatusEl.innerHTML = '<span class="pulse"></span>Companion thinking…';
+        const start = performance.now();
+        setTimeout(() => {
+            const reply = craftChatResponse(value);
+            appendChatBubble('ai', reply);
+            const duration = Math.round(performance.now() - start);
+            chatStatusEl.innerHTML = `<span class="pulse"></span>Responded in ${duration} ms.`;
+        }, 760);
+    }
+
+    chatSendBtn.addEventListener('click', sendChatMessage);
+    chatInputEl.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendChatMessage();
+        }
+    });
+
+    suggestionChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const statement = chip.dataset.say;
+            chatInputEl.value = statement;
+            chatInputEl.focus();
+        });
+    });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        let listening = false;
+        recognition.onstart = () => {
+            listening = true;
+            voiceBtn.classList.add('recording');
+            chatStatusEl.innerHTML = '<span class="pulse"></span>Listening…';
+        };
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            if (transcript) {
+                chatInputEl.value = chatInputEl.value ? `${chatInputEl.value} ${transcript}` : transcript;
+                chatInputEl.focus();
+                chatStatusEl.innerHTML = '<span class="pulse"></span>Voice captured. Review & send.';
+            }
+        };
+        recognition.onerror = (event) => {
+            chatStatusEl.innerHTML = `<span class="pulse"></span>${event.error === 'no-speech' ? 'No speech detected. Tap mic to retry.' : 'Voice input error.'}`;
+        };
+        recognition.onend = () => {
+            voiceBtn.classList.remove('recording');
+            if (listening) {
+                chatStatusEl.innerHTML = '<span class="pulse"></span>Processing voice input…';
+            }
+            setTimeout(() => {
+                chatStatusEl.innerHTML = '<span class="pulse"></span>Ready for quick prompts.';
+            }, 1400);
+            listening = false;
+        };
+        voiceBtn.addEventListener('click', () => {
+            if (listening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (err) {
+                    chatStatusEl.innerHTML = '<span class="pulse"></span>Unable to access microphone.';
+                }
+            }
+        });
+    } else {
+        voiceBtn.classList.add('disabled');
+        voiceBtn.setAttribute('title', 'Voice input unsupported in this browser.');
+        voiceBtn.addEventListener('click', () => {
+            chatStatusEl.innerHTML = '<span class="pulse"></span>Voice input not available on this device.';
+        });
+    }
+</script>
+</body>
+</html>
