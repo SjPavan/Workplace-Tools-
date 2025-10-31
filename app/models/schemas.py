@@ -7,7 +7,7 @@ import uuid
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declared_attr, synonym
 
 from app.database import Base
 
@@ -37,6 +37,21 @@ class TimestampMixin:
         server_default=sa.text("now()"),
         onupdate=sa.func.now(),
     )
+
+
+class JSONMetadataMixin:
+    """Mixin providing a JSONB metadata column with reserved-name safe access."""
+
+    metadata_ = sa.Column(
+        "metadata",
+        pg.JSONB,
+        nullable=False,
+        server_default=sa.text("'{}'::jsonb"),
+    )
+
+    @declared_attr
+    def metadata(cls):  # type: ignore[misc]
+        return synonym("metadata_")
 
 
 class TaskStatus(enum.Enum):
@@ -152,7 +167,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
-class Device(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Device(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "devices"
     __table_args__ = (
         sa.UniqueConstraint("user_id", "device_identifier", name="uq_devices_user_device_identifier"),
@@ -169,12 +184,11 @@ class Device(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     device_identifier = sa.Column(sa.String(255), nullable=True)
     push_token = sa.Column(sa.String(512), nullable=True)
     last_seen_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="devices")
 
 
-class Calendar(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Calendar(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "calendars"
     __table_args__ = (
         sa.UniqueConstraint("user_id", "external_id", name="uq_calendars_user_external_id"),
@@ -193,13 +207,12 @@ class Calendar(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     source = sa.Column(sa.String(64), nullable=True)
     is_primary = sa.Column(sa.Boolean, nullable=False, server_default=sa.text("false"))
     external_id = sa.Column(sa.String(255), nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="calendars")
     tasks = relationship("Task", back_populates="calendar")
 
 
-class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Project(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "projects"
     __table_args__ = (
         sa.Index("ix_projects_user_status", "user_id", "status"),
@@ -216,7 +229,6 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     start_date = sa.Column(sa.Date, nullable=True)
     due_date = sa.Column(sa.Date, nullable=True)
     priority = sa.Column(sa.Integer, nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="projects")
     tasks = relationship("Task", back_populates="project")
@@ -224,7 +236,7 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     financial_transactions = relationship("FinancialTransaction", back_populates="project")
 
 
-class Task(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Task(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "tasks"
     __table_args__ = (
         sa.Index("ix_tasks_user_status_due", "user_id", "status", "due_at"),
@@ -265,7 +277,6 @@ class Task(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     recurrence_rule = sa.Column(sa.String(255), nullable=True)
     estimated_minutes = sa.Column(sa.Integer, nullable=True)
     actual_minutes = sa.Column(sa.Integer, nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="tasks")
     calendar = relationship("Calendar", back_populates="tasks")
@@ -277,7 +288,7 @@ class Task(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     ai_logs = relationship("AIInteractionLog", back_populates="task")
 
 
-class Routine(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Routine(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "routines"
     __table_args__ = (
         sa.Index("ix_routines_user_active", "user_id", "is_active"),
@@ -296,7 +307,6 @@ class Routine(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     end_time = sa.Column(sa.Time(timezone=True), nullable=True)
     cadence = sa.Column(sa.String(64), nullable=True)
     is_active = sa.Column(sa.Boolean, nullable=False, server_default=sa.text("true"))
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="routines")
     tasks = relationship(
@@ -330,7 +340,7 @@ class RoutineTaskAssociation(Base):
     task = relationship("Task", back_populates="routines")
 
 
-class Habit(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Habit(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "habits"
     __table_args__ = (
         sa.Index("ix_habits_user_active", "user_id", "is_archived"),
@@ -349,13 +359,12 @@ class Habit(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     start_date = sa.Column(sa.Date, nullable=True)
     end_date = sa.Column(sa.Date, nullable=True)
     is_archived = sa.Column(sa.Boolean, nullable=False, server_default=sa.text("false"))
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="habits")
     logs = relationship("HabitLog", back_populates="habit", cascade="all, delete-orphan")
 
 
-class HabitLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class HabitLog(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "habit_logs"
     __table_args__ = (
         sa.Index("ix_habit_logs_habit_logged_at", "habit_id", "logged_at"),
@@ -374,7 +383,6 @@ class HabitLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     logged_at = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()"))
     value = sa.Column(sa.Numeric(10, 2), nullable=True)
     note = sa.Column(sa.Text, nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     habit = relationship("Habit", back_populates="logs")
     user = relationship("User", back_populates="habit_logs")
@@ -401,7 +409,7 @@ class MoodLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user = relationship("User", back_populates="mood_logs")
 
 
-class ResearchAsset(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class ResearchAsset(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "research_assets"
     __table_args__ = (
         sa.Index("ix_research_assets_user_project", "user_id", "project_id"),
@@ -422,13 +430,12 @@ class ResearchAsset(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     url = sa.Column(sa.String(512), nullable=True)
     source = sa.Column(sa.String(128), nullable=True)
     content_excerpt = sa.Column(sa.Text, nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="research_assets")
     project = relationship("Project", back_populates="research_assets")
 
 
-class ScrapingJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class ScrapingJob(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "scraping_jobs"
     __table_args__ = (
         sa.Index("ix_scraping_jobs_status_next", "status", "next_run_at"),
@@ -454,7 +461,6 @@ class ScrapingJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_success_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
     failure_count = sa.Column(sa.Integer, nullable=False, server_default=sa.text("0"))
     config = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="scraping_jobs")
     extraction_results = relationship(
@@ -462,7 +468,7 @@ class ScrapingJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
-class ExtractionResult(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class ExtractionResult(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "extraction_results"
     __table_args__ = (
         sa.Index("ix_extraction_results_job_created", "job_id", "created_at"),
@@ -487,7 +493,7 @@ class ExtractionResult(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     job = relationship("ScrapingJob", back_populates="extraction_results")
 
 
-class AIInteractionLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class AIInteractionLog(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "ai_interaction_logs"
     __table_args__ = (
         sa.Index("ix_ai_logs_user_created", "user_id", "created_at"),
@@ -508,13 +514,12 @@ class AIInteractionLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     channel = sa.Column(sa.String(64), nullable=True)
     content = sa.Column(sa.Text, nullable=False)
     response_time_ms = sa.Column(sa.Integer, nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="ai_logs")
     task = relationship("Task", back_populates="ai_logs")
 
 
-class FinancialAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class FinancialAccount(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "financial_accounts"
     __table_args__ = (
         sa.Index("ix_financial_accounts_user_type", "user_id", "account_type"),
@@ -535,7 +540,6 @@ class FinancialAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     currency = sa.Column(sa.String(3), nullable=False, server_default=sa.text("'USD'"))
     balance = sa.Column(sa.Numeric(16, 2), nullable=False, server_default=sa.text("0"))
     last_synced_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="financial_accounts")
     transactions = relationship(
@@ -543,7 +547,7 @@ class FinancialAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
-class FinancialTransaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class FinancialTransaction(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "financial_transactions"
     __table_args__ = (
         sa.Index("ix_financial_transactions_account_date", "account_id", "transaction_date"),
@@ -584,14 +588,13 @@ class FinancialTransaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     merchant = sa.Column(sa.String(255), nullable=True)
     description = sa.Column(sa.Text, nullable=True)
     external_id = sa.Column(sa.String(255), nullable=True)
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     account = relationship("FinancialAccount", back_populates="transactions")
     user = relationship("User", back_populates="financial_transactions")
     project = relationship("Project", back_populates="financial_transactions")
 
 
-class AnalyticsSnapshot(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class AnalyticsSnapshot(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "analytics_snapshots"
     __table_args__ = (
         sa.UniqueConstraint("user_id", "metric", "snapshot_date", name="uq_analytics_snapshot"),
@@ -606,12 +609,11 @@ class AnalyticsSnapshot(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     snapshot_date = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()"))
     value = sa.Column(sa.Numeric(20, 4), nullable=False)
     dimensions = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
-    metadata = sa.Column(pg.JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
 
     user = relationship("User", back_populates="analytics_snapshots")
 
 
-class NotificationPreference(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class NotificationPreference(UUIDPrimaryKeyMixin, TimestampMixin, JSONMetadataMixin, Base):
     __tablename__ = "notification_preferences"
     __table_args__ = (
         sa.UniqueConstraint("user_id", "channel", name="uq_notification_preferences_user_channel"),
