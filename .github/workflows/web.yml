@@ -38,7 +38,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Run ESLint placeholder
-        run: npx --yes eslint@8 --max-warnings=0 --no-eslintrc --ext .js .
+        run: npx --yes eslint@8 --max-warnings=0 --no-eslintrc --ext .js --no-error-on-unmatched-pattern .
 
       - name: Run Prettier formatting check
         run: npx --yes prettier@3 --check '**/*.{css,html,js,json,md}'

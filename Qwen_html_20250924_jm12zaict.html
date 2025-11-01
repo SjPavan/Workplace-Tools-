@@ -1,193 +1,214 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Text Case Converter</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            padding: 30px;
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
-        }
-        .input-section {
-            margin-bottom: 30px;
-        }
-        #inputText {
-            width: 100%;
-            height: 120px;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        .output-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .output-box {
-            display: flex;
-            flex-direction: column;
-        }
-        .output-label {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        .output-text {
-            width: 100%;
-            height: 60px;
-            padding: 12px;
-            font-size: 15px;
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-            resize: vertical;
-        }
-        .copy-btn {
-            align-self: flex-start;
-            margin-top: 8px;
-            padding: 8px 15px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .copy-btn:hover {
-            background-color: #2980b9;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+      }
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 30px;
+      }
+      .input-section {
+        margin-bottom: 30px;
+      }
+      #inputText {
+        width: 100%;
+        height: 120px;
+        padding: 15px;
+        font-size: 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+      .output-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .output-box {
+        display: flex;
+        flex-direction: column;
+      }
+      .output-label {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #2c3e50;
+      }
+      .output-text {
+        width: 100%;
+        height: 60px;
+        padding: 12px;
+        font-size: 15px;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+        resize: vertical;
+      }
+      .copy-btn {
+        align-self: flex-start;
+        margin-top: 8px;
+        padding: 8px 15px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .copy-btn:hover {
+        background-color: #2980b9;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Text Case Converter</h1>
 
-<div class="container">
-    <h1>Text Case Converter</h1>
-    
-    <div class="input-section">
-        <textarea id="inputText" placeholder="Enter your text here..."></textarea>
-    </div>
-    
-    <div class="output-section">
-        <div class="output-box">
-            <div class="output-label">Title Case</div>
-            <textarea id="titleCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('titleCase')">Copy</button>
-        </div>
-        
-        <div class="output-box">
-            <div class="output-label">UPPER CASE</div>
-            <textarea id="upperCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('upperCase')">Copy</button>
-        </div>
-        
-        <div class="output-box">
-            <div class="output-label">lower case</div>
-            <textarea id="lowerCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('lowerCase')">Copy</button>
-        </div>
-        
-        <div class="output-box">
-            <div class="output-label">Sentence case</div>
-            <textarea id="sentenceCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('sentenceCase')">Copy</button>
-        </div>
-        
-        <div class="output-box">
-            <div class="output-label">camelCase</div>
-            <textarea id="camelCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('camelCase')">Copy</button>
-        </div>
-        
-        <div class="output-box">
-            <div class="output-label">PascalCase</div>
-            <textarea id="pascalCase" class="output-text" readonly></textarea>
-            <button class="copy-btn" onclick="copyText('pascalCase')">Copy</button>
-        </div>
-    </div>
-</div>
+      <div class="input-section">
+        <textarea
+          id="inputText"
+          placeholder="Enter your text here..."
+        ></textarea>
+      </div>
 
-<script>
-    function convertToTitleCase(str) {
-        return str.toLowerCase().split(' ').map(word => {
+      <div class="output-section">
+        <div class="output-box">
+          <div class="output-label">Title Case</div>
+          <textarea id="titleCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('titleCase')">Copy</button>
+        </div>
+
+        <div class="output-box">
+          <div class="output-label">UPPER CASE</div>
+          <textarea id="upperCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('upperCase')">Copy</button>
+        </div>
+
+        <div class="output-box">
+          <div class="output-label">lower case</div>
+          <textarea id="lowerCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('lowerCase')">Copy</button>
+        </div>
+
+        <div class="output-box">
+          <div class="output-label">Sentence case</div>
+          <textarea id="sentenceCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('sentenceCase')">
+            Copy
+          </button>
+        </div>
+
+        <div class="output-box">
+          <div class="output-label">camelCase</div>
+          <textarea id="camelCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('camelCase')">Copy</button>
+        </div>
+
+        <div class="output-box">
+          <div class="output-label">PascalCase</div>
+          <textarea id="pascalCase" class="output-text" readonly></textarea>
+          <button class="copy-btn" onclick="copyText('pascalCase')">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function convertToTitleCase(str) {
+        return str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => {
             return word.charAt(0).toUpperCase() + word.slice(1);
-        }).join(' ');
-    }
+          })
+          .join(" ");
+      }
 
-    function convertToUpperCase(str) {
+      function convertToUpperCase(str) {
         return str.toUpperCase();
-    }
+      }
 
-    function convertToLowerCase(str) {
+      function convertToLowerCase(str) {
         return str.toLowerCase();
-    }
+      }
 
-    function convertToSentenceCase(str) {
-        if (!str) return '';
+      function convertToSentenceCase(str) {
+        if (!str) return "";
         const sentences = str.toLowerCase().split(/([.!?]+)/);
-        return sentences.map(sentence => {
+        return sentences
+          .map((sentence) => {
             const trimmed = sentence.trim();
             if (trimmed) {
-                return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+              return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
             }
             return sentence;
-        }).join('');
-    }
+          })
+          .join("");
+      }
 
-    function convertToCamelCase(str) {
+      function convertToCamelCase(str) {
         const words = str.toLowerCase().split(/\s+/);
-        return words.map((word, i) => {
+        return words
+          .map((word, i) => {
             if (i === 0) {
-                return word;
+              return word;
             }
             return word.charAt(0).toUpperCase() + word.slice(1);
-        }).join('');
-    }
+          })
+          .join("");
+      }
 
-    function convertToPascalCase(str) {
-        return str.toLowerCase().split(/\s+/).map(word => {
+      function convertToPascalCase(str) {
+        return str
+          .toLowerCase()
+          .split(/\s+/)
+          .map((word) => {
             return word.charAt(0).toUpperCase() + word.slice(1);
-        }).join('');
-    }
+          })
+          .join("");
+      }
 
-    function updateAllOutputs() {
-        const input = document.getElementById('inputText').value;
-        
-        document.getElementById('titleCase').value = convertToTitleCase(input);
-        document.getElementById('upperCase').value = convertToUpperCase(input);
-        document.getElementById('lowerCase').value = convertToLowerCase(input);
-        document.getElementById('sentenceCase').value = convertToSentenceCase(input);
-        document.getElementById('camelCase').value = convertToCamelCase(input);
-        document.getElementById('pascalCase').value = convertToPascalCase(input);
-    }
+      function updateAllOutputs() {
+        const input = document.getElementById("inputText").value;
 
-    function copyText(elementId) {
+        document.getElementById("titleCase").value = convertToTitleCase(input);
+        document.getElementById("upperCase").value = convertToUpperCase(input);
+        document.getElementById("lowerCase").value = convertToLowerCase(input);
+        document.getElementById("sentenceCase").value =
+          convertToSentenceCase(input);
+        document.getElementById("camelCase").value = convertToCamelCase(input);
+        document.getElementById("pascalCase").value =
+          convertToPascalCase(input);
+      }
+
+      function copyText(elementId) {
         const output = document.getElementById(elementId);
         output.select();
-        document.execCommand('copy');
-        alert('Copied to clipboard!');
-    }
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+      }
 
-    document.getElementById('inputText').addEventListener('input', updateAllOutputs);
-</script>
-
-</body>
+      document
+        .getElementById("inputText")
+        .addEventListener("input", updateAllOutputs);
+    </script>
+  </body>
 </html>
