@@ -1,0 +1,28 @@
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+
+# Environment variables and secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Dependency directories
+node_modules/
+venv/
+.envrc
+
+# Build outputs
+build/
+dist/
+coverage/
+.cache/
+.tmp/
+logs/
+/tmp/
+
+# Editors and tooling
+.vscode/
+.idea/
+*.swp
