@@ -11,7 +11,10 @@ Thumbs.db
 # Dependency directories
 node_modules/
 venv/
+.venv/
 .envrc
+__pycache__/
+*.egg-info/
 
 # Build outputs
 build/
@@ -21,8 +24,33 @@ coverage/
 .tmp/
 logs/
 /tmp/
+.next/
+out/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js
+.npm
+.nyc_output
+*.tgz
 
 # Editors and tooling
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
