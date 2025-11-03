@@ -53,7 +53,9 @@ const AppProviders: React.FC = () => {
 
   useEffect(() => {
     if (isDatabaseReady) {
-      hydrateAuth();
+      hydrateAuth().catch((error) => {
+        console.warn('Failed to hydrate authentication state', error);
+      });
     }
   }, [hydrateAuth, isDatabaseReady]);
 

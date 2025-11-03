@@ -32,6 +32,7 @@ yarn-error.*
 # local env files
 .env*.local
 android/app/google-services.json
+android/app/debug.keystore
 
 # typescript
 *.tsbuildinfo
