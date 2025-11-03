@@ -1,0 +1,46 @@
+version: "1"
+build:
+  env:
+    - PYTHON_VERSION=3.11
+services:
+  - type: web
+    name: workplace-tools-api
+    env: python
+    repo: https://github.com/your-username/your-repo-name.git
+    rootDir: backend
+    buildCommand: "pip install poetry && poetry install --no-dev"
+    startCommand: "poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: PROJECT_NAME
+        value: Workplace Tools API
+      - key: API_VERSION
+        value: 0.1.0
+      - key: LOG_LEVEL
+        value: INFO
+      - key: RATE_LIMIT
+        value: 100/minute
+      - key: CORS_ORIGINS
+        value: https://your-web-app-domain.vercel.app
+    autoDeploy: true
+    plan: free
