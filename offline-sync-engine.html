@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Offline Sync Engine Playground</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    color: #0f172a;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 2.5rem 1.5rem 1rem;
+    text-align: center;
+  }
+
+  header h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+  }
+
+  header p {
+    margin: 0 auto;
+    max-width: 760px;
+    color: #475569;
+    font-size: 1rem;
+  }
+
+  main {
+    width: min(1180px, 92vw);
+    margin: 0 auto 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .panel {
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(12px);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.55);
+  }
+
+  .panel h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+  }
+
+  .panel p {
+    color: #475569;
+    margin-top: 0;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .status-badge {
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #d1d5db;
+    color: #111827;
+  }
+
+  .status-badge.online {
+    background: rgba(16, 185, 129, 0.18);
+    color: #047857;
+  }
+
+  .status-badge.offline {
+    background: rgba(248, 113, 113, 0.2);
+    color: #b91c1c;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    border-radius: 0.85rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    font: inherit;
+    resize: vertical;
+    background: rgba(248, 250, 252, 0.8);
+    color: inherit;
+  }
+
+  textarea:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.35);
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  button {
+    border: none;
+    border-radius: 0.85rem;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  button.primary {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    box-shadow: 0 14px 30px -16px rgba(59, 130, 246, 0.85);
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+  }
+
+  button.primary:hover {
+    box-shadow: 0 16px 34px -16px rgba(99, 102, 241, 0.9);
+  }
+
+  button.loading {
+    opacity: 0.65;
+    cursor: progress;
+  }
+
+  .controls button {
+    flex: 1;
+    min-width: 120px;
+    background: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+  }
+
+  .controls button.primary {
+    flex: 2;
+  }
+
+  .queue-info,
+  .last-sync {
+    font-size: 0.85rem;
+    color: #475569;
+    margin-top: 0.6rem;
+  }
+
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .records-table th,
+  .records-table td {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+    padding: 0.65rem 0.5rem;
+    text-align: left;
+  }
+
+  .records-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .notifications {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .notification {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 0.65rem;
+    align-items: baseline;
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.85rem;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid transparent;
+  }
+
+  .notification .time {
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
+
+  .notification .type {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #334155;
+  }
+
+  .notification .message {
+    font-size: 0.9rem;
+  }
+
+  .notification.info {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+  }
+
+  .notification.success {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+
+  .notification.conflict {
+    border-left-color: #f97316;
+    background: rgba(249, 115, 22, 0.12);
+  }
+
+  .notification.warn {
+    border-left-color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+  }
+
+  #test-results {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .test-result {
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    border-left: 4px solid transparent;
+    background: rgba(15, 23, 42, 0.04);
+  }
+
+  .test-result .title {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  .test-result .details {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+
+  .test-result.passed {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+
+  .test-result.failed {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.16);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      background: radial-gradient(circle at top, #0f172a, #020617 65%);
+      color: #e2e8f0;
+    }
+
+    .panel {
+      background: rgba(15, 23, 42, 0.78);
+      box-shadow: 0 20px 42px -28px rgba(15, 118, 110, 0.6);
+    }
+
+    textarea {
+      background: rgba(15, 23, 42, 0.6);
+      color: inherit;
+      border: 1px solid rgba(148, 163, 184, 0.38);
+    }
+
+    .records-table th,
+    .records-table td {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .controls button {
+      background: rgba(59, 130, 246, 0.12);
+      color: #e2e8f0;
+    }
+
+    .notification .type {
+      color: #cbd5f5;
+    }
+
+    .notification .message {
+      color: #e2e8f0;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Offline Sync Engine Playground</h1>
+  <p>
+    Simulate a cross-platform sync layer that reconciles Supabase data with on-device storage, queued offline
+    mutations, and background synchronization.
+  </p>
+</header>
+<main>
+  <section class="grid">
+    <article class="panel" id="supabase-panel">
+      <div class="panel-header">
+        <h2>Supabase (Cloud)</h2>
+      </div>
+      <p class="help-text">
+        Canonical store representing your Supabase project. Records update whenever queued mutations flush
+        successfully.
+      </p>
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Content</th>
+            <th>Updated By</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody id="supabase-records">
+          <tr><td colspan="4">No records yet</td></tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="panel device-panel" data-device="mobile">
+      <div class="panel-header">
+        <h2>Mobile Device</h2>
+        <span class="status-badge online">Online</span>
+      </div>
+      <p>Capture edits while travelling offline. Changes queue locally until connectivity is restored.</p>
+      <textarea placeholder="Capture mobile offline drafts..."></textarea>
+      <div class="controls">
+        <button type="button" class="primary save-note">Save Update</button>
+        <button type="button" class="toggle-online">Go Offline</button>
+      </div>
+      <div class="queue-info">Queued mutations: <span class="queue-count">0</span></div>
+      <div class="last-sync">Last sync: <span class="last-sync-value">Never</span></div>
+    </article>
+
+    <article class="panel device-panel" data-device="web">
+      <div class="panel-header">
+        <h2>Web App</h2>
+        <span class="status-badge online">Online</span>
+      </div>
+      <p>Desktop session receives Supabase updates and can push as soon as they happen.</p>
+      <textarea placeholder="Type web edits here..."></textarea>
+      <div class="controls">
+        <button type="button" class="primary save-note">Save Update</button>
+        <button type="button" class="toggle-online">Go Offline</button>
+      </div>
+      <div class="queue-info">Queued mutations: <span class="queue-count">0</span></div>
+      <div class="last-sync">Last sync: <span class="last-sync-value">Never</span></div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Notifications &amp; Conflict Resolution</h2>
+    <ul class="notifications" id="notification-log"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>Offline Integration Tests</h2>
+    <p>Replays deterministic offline/online scenarios to verify convergent state and conflict notifications.</p>
+    <button type="button" id="run-tests" class="primary">Run Integration Tests</button>
+    <div id="test-results"></div>
+  </section>
+</main>
+<script>
+(() => {
+  const DEFAULT_RECORD_ID = 'shared-note';
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+
+  class MemoryStorage {
+    constructor() {
+      this.map = new Map();
+    }
+    getItem(key) {
+      const value = this.map.get(key);
+      return value === undefined ? null : value;
+    }
+    setItem(key, value) {
+      this.map.set(key, String(value));
+    }
+    removeItem(key) {
+      this.map.delete(key);
+    }
+    clear() {
+      this.map.clear();
+    }
+  }
+
+  class NotificationCenter {
+    constructor(listElement = null) {
+      this.listElement = listElement;
+      this.items = [];
+    }
+
+    attach(listElement) {
+      this.listElement = listElement;
+      this.render();
+    }
+
+    push(type, message, meta = {}) {
+      const entry = {
+        id: uid(),
+        type,
+        message,
+        meta,
+        timestamp: new Date(),
+      };
+      this.items.unshift(entry);
+      if (this.items.length > 60) {
+        this.items.pop();
+      }
+      this.render();
+      return entry;
+    }
+
+    info(message, meta) {
+      return this.push('info', message, meta);
+    }
+
+    success(message, meta) {
+      return this.push('success', message, meta);
+    }
+
+    warn(message, meta) {
+      return this.push('warn', message, meta);
+    }
+
+    conflict(message, meta) {
+      return this.push('conflict', message, meta);
+    }
+
+    getSnapshot() {
+      return [...this.items];
+    }
+
+    clear() {
+      this.items = [];
+      this.render();
+    }
+
+    render() {
+      if (!this.listElement) {
+        return;
+      }
+      this.listElement.innerHTML = '';
+      if (!this.items.length) {
+        const empty = document.createElement('li');
+        empty.className = 'notification info';
+        empty.innerHTML = '<span class="time">—</span><span class="type">info</span><span class="message">No notifications yet.</span>';
+        this.listElement.appendChild(empty);
+        return;
+      }
+
+      for (const entry of this.items) {
+        const li = document.createElement('li');
+        li.className = `notification ${entry.type}`;
+        const time = document.createElement('span');
+        time.className = 'time';
+        time.textContent = entry.timestamp.toLocaleTimeString();
+        const type = document.createElement('span');
+        type.className = 'type';
+        type.textContent = entry.type;
+        const message = document.createElement('span');
+        message.className = 'message';
+        message.textContent = entry.message;
+        li.appendChild(time);
+        li.appendChild(type);
+        li.appendChild(message);
+        this.listElement.appendChild(li);
+      }
+    }
+  }
+
+  class SupabaseMock {
+    constructor(notifications, options = {}) {
+      this.notifications = notifications;
+      this.records = new Map();
+      this.listeners = new Set();
+      this.latency = options.latency ?? 80;
+    }
+
+    subscribe(listener) {
+      this.listeners.add(listener);
+      listener(this.snapshot());
+      return () => {
+        this.listeners.delete(listener);
+      };
+    }
+
+    snapshot() {
+      return Array.from(this.records.values()).sort((a, b) => a.id.localeCompare(b.id));
+    }
+
+    emit() {
+      const snapshot = this.snapshot();
+      this.listeners.forEach((listener) => listener(snapshot));
+    }
+
+    initializeRecord(id, content, source = 'seed') {
+      const record = {
+        id,
+        content,
+        updatedAt: Date.now(),
+        updatedBy: source,
+        version: 1,
+      };
+      this.records.set(id, record);
+      this.emit();
+      this.notifications?.info(`[Supabase] Seeded record "${id}" from ${source}.`);
+      return record;
+    }
+
+    applyMutation(mutation) {
+      const existing = this.records.get(mutation.id);
+      const baseMessage = `[Supabase] ${mutation.source} -> ${mutation.id}`;
+      if (!existing || mutation.timestamp >= existing.updatedAt) {
+        const record = {
+          id: mutation.id,
+          content: mutation.content,
+          updatedAt: mutation.timestamp,
+          updatedBy: mutation.source,
+          version: (existing?.version ?? 0) + 1,
+        };
+        this.records.set(mutation.id, record);
+        this.emit();
+        this.notifications?.success(`${baseMessage} accepted (v${record.version}).`);
+        return { status: 'applied', record };
+      }
+
+      this.notifications?.conflict(`${baseMessage} rejected; newer change already persisted by ${existing.updatedBy}.`, {
+        server: existing,
+        incoming: mutation,
+      });
+      return { status: 'conflict', conflict: { server: existing, incoming: mutation } };
+    }
+
+    forceApply(mutation, reason = 'conflict-resolution') {
+      const record = {
+        id: mutation.id,
+        content: mutation.content,
+        updatedAt: mutation.timestamp,
+        updatedBy: mutation.source,
+        version: (this.records.get(mutation.id)?.version ?? 0) + 1,
+      };
+      this.records.set(mutation.id, record);
+      this.emit();
+      this.notifications?.success(`[Supabase] ${reason}: promoted ${mutation.source}'s update for "${mutation.id}".`);
+      return record;
+    }
+
+    getRecord(id) {
+      return this.records.get(id) ?? null;
+    }
+
+    reset() {
+      this.records.clear();
+      this.emit();
+      this.notifications?.info('[Supabase] Cleared all records.');
+    }
+  }
+
+  class DeviceStore {
+    constructor(name, supabase, notifications, options = {}) {
+      this.name = name;
+      this.supabase = supabase;
+      this.notifications = notifications;
+      this.storage = options.storage ?? window.localStorage;
+      this.storagePrefix = options.storagePrefix ?? 'offline-sync';
+      this.storageKey = `${this.storagePrefix}:${name}:records`;
+      this.queueKey = `${this.storagePrefix}:${name}:queue`;
+      this.localRecords = this.readJSON(this.storageKey, []);
+      this.queue = this.readJSON(this.queueKey, []);
+      this.online = options.startOnline ?? true;
+      this.listeners = new Set();
+      this.syncing = false;
+      this.lastSync = null;
+      this.simulatedLatency = options.simulatedLatency ?? 40;
+      this.backgroundInterval = options.backgroundInterval ?? 900;
+      this.startBackgroundSync();
+      this.emit();
+    }
+
+    get label() {
+      return this.name.charAt(0).toUpperCase() + this.name.slice(1);
+    }
+
+    readJSON(key, fallback) {
+      try {
+        const raw = this.storage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (_err) {
+        return fallback;
+      }
+    }
+
+    writeJSON(key, value) {
+      try {
+        this.storage.setItem(key, JSON.stringify(value));
+      } catch (_err) {
+        // ignore storage quota issues for this playground
+      }
+    }
+
+    subscribe(listener) {
+      this.listeners.add(listener);
+      listener(this.snapshot());
+      return () => this.listeners.delete(listener);
+    }
+
+    emit() {
+      const snapshot = this.snapshot();
+      this.listeners.forEach((listener) => listener(snapshot));
+    }
+
+    snapshot() {
+      return {
+        name: this.name,
+        label: this.label,
+        online: this.online,
+        queueSize: this.queue.length,
+        records: this.localRecords.slice(),
+        lastSync: this.lastSync,
+      };
+    }
+
+    setOnline(nextOnline) {
+      if (this.online === nextOnline) {
+        return;
+      }
+      this.online = nextOnline;
+      const state = nextOnline ? 'online' : 'offline';
+      this.notifications?.info(`[${this.label}] Switched ${state}.`);
+      this.emit();
+      if (nextOnline) {
+        this.syncNow();
+      }
+    }
+
+    startBackgroundSync() {
+      this.stopBackgroundSync();
+      this.backgroundTimer = setInterval(() => {
+        this.syncNow();
+      }, this.backgroundInterval);
+    }
+
+    stopBackgroundSync() {
+      if (this.backgroundTimer) {
+        clearInterval(this.backgroundTimer);
+      }
+    }
+
+    applyLocal(mutation) {
+      const existingRecord = this.localRecords.find((record) => record.id === mutation.id);
+      const inferredVersion = existingRecord?.version ?? 0;
+      const nextRecord = {
+        id: mutation.id,
+        content: mutation.content,
+        updatedAt: mutation.timestamp,
+        updatedBy: mutation.source,
+        version: mutation.version ?? inferredVersion + 1,
+      };
+      const existingIndex = existingRecord
+        ? this.localRecords.indexOf(existingRecord)
+        : -1;
+      if (existingIndex >= 0) {
+        this.localRecords.splice(existingIndex, 1, nextRecord);
+      } else {
+        this.localRecords.push(nextRecord);
+      }
+      this.writeJSON(this.storageKey, this.localRecords);
+      this.emit();
+      return nextRecord;
+    }
+
+    upsertRecord(content, options = {}) {
+      const mutation = {
+        id: options.id ?? DEFAULT_RECORD_ID,
+        content,
+        timestamp: options.timestamp ?? Date.now(),
+        source: this.name,
+        origin: options.origin ?? 'user',
+      };
+      this.applyLocal(mutation);
+      this.queue.push(mutation);
+      this.writeJSON(this.queueKey, this.queue);
+      this.notifications?.info(`[${this.label}] Queued mutation (${this.queue.length} pending).`);
+      if (this.online) {
+        this.syncNow();
+      }
+      return mutation;
+    }
+
+    async syncNow() {
+      if (this.syncing || !this.online || this.queue.length === 0) {
+        return;
+      }
+      this.syncing = true;
+
+      while (this.online && this.queue.length) {
+        const mutation = this.queue[0];
+        await delay(this.simulatedLatency);
+        const result = this.supabase.applyMutation(mutation);
+
+        if (result.status === 'applied') {
+          this.queue.shift();
+          this.lastSync = Date.now();
+          this.writeJSON(this.queueKey, this.queue);
+          this.applyLocal({
+            ...result.record,
+            source: result.record.updatedBy,
+            timestamp: result.record.updatedAt,
+          });
+          this.notifications?.success(`[${this.label}] Synced "${mutation.id}".`);
+        } else if (result.status === 'conflict') {
+          this.queue.shift();
+          this.writeJSON(this.queueKey, this.queue);
+          const resolvedRecord = this.resolveConflict(result.conflict);
+          if (resolvedRecord) {
+            this.applyLocal({
+              ...resolvedRecord,
+              source: resolvedRecord.updatedBy,
+              timestamp: resolvedRecord.updatedAt,
+            });
+          }
+          this.lastSync = Date.now();
+        }
+      }
+
+      this.syncing = false;
+      this.emit();
+    }
+
+    resolveConflict(conflict) {
+      const { server, incoming } = conflict;
+      if (incoming.timestamp > server.updatedAt) {
+        this.notifications?.info(
+          `[${this.label}] Conflict resolved locally; pushing fresher data upstream.`
+        );
+        return this.supabase.forceApply(incoming, 'newer-local-update');
+      }
+
+      this.notifications?.conflict(
+        `[${this.label}] Conflict resolved by keeping remote content for "${incoming.id}".`
+      );
+      return server;
+    }
+
+    clear() {
+      this.localRecords = [];
+      this.queue = [];
+      this.writeJSON(this.storageKey, this.localRecords);
+      this.writeJSON(this.queueKey, this.queue);
+      this.emit();
+    }
+
+    teardown() {
+      this.stopBackgroundSync();
+    }
+  }
+
+  function createEnvironment({ attachToDom = false, storagePrefix = uid(), backgroundInterval = 1200, simulatedLatency = 40 } = {}) {
+    const storage = attachToDom ? window.localStorage : new MemoryStorage();
+    if (!attachToDom) {
+      storage.clear();
+    }
+    const notifications = attachToDom ? globalNotificationCenter : new NotificationCenter();
+    const supabase = new SupabaseMock(notifications, { latency: simulatedLatency });
+    const mobile = new DeviceStore('mobile', supabase, notifications, {
+      storage,
+      storagePrefix,
+      backgroundInterval,
+      simulatedLatency,
+    });
+    const web = new DeviceStore('web', supabase, notifications, {
+      storage,
+      storagePrefix,
+      backgroundInterval,
+      simulatedLatency,
+    });
+
+    const flushQueues = async () => {
+      await Promise.all([mobile.syncNow(), web.syncNow()]);
+    };
+
+    const resetAll = () => {
+      supabase.reset();
+      mobile.clear();
+      web.clear();
+      notifications.clear?.();
+    };
+
+    const teardown = () => {
+      mobile.teardown();
+      web.teardown();
+    };
+
+    return {
+      supabase,
+      mobile,
+      web,
+      notifications,
+      flushQueues,
+      resetAll,
+      teardown,
+    };
+  }
+
+  class IntegrationTestRunner {
+    constructor(tests) {
+      this.tests = tests;
+    }
+
+    async run() {
+      const results = [];
+      for (const spec of this.tests) {
+        const env = createEnvironment({
+          attachToDom: false,
+          backgroundInterval: 10,
+          simulatedLatency: 5,
+        });
+        try {
+          const context = {
+            ...env,
+            delay,
+          };
+          await spec.run(context);
+          results.push({
+            name: spec.name,
+            status: 'passed',
+            details: spec.describe?.(context) ?? spec.successMessage ?? 'Completed successfully.',
+          });
+        } catch (error) {
+          results.push({
+            name: spec.name,
+            status: 'failed',
+            details: error?.message ?? 'Unknown failure',
+          });
+        } finally {
+          env.teardown();
+        }
+      }
+      return results;
+    }
+  }
+
+  const integrationTests = [
+    {
+      name: 'Queued mutations replay after offline edits',
+      successMessage: 'Both devices replay mutations and converge to the latest update.',
+      async run(env) {
+        env.supabase.initializeRecord(DEFAULT_RECORD_ID, 'Initial shared content', 'system');
+
+        env.mobile.setOnline(false);
+        env.web.setOnline(false);
+
+        env.mobile.upsertRecord('Mobile draft while offline');
+        await env.delay(5);
+        env.web.upsertRecord('Web revision while offline');
+        await env.delay(5);
+
+        env.mobile.setOnline(true);
+        await env.flushQueues();
+        env.web.setOnline(true);
+        await env.flushQueues();
+
+        const record = env.supabase.getRecord(DEFAULT_RECORD_ID);
+        const mobileSnapshot = env.mobile.snapshot();
+        const webSnapshot = env.web.snapshot();
+
+        if (!record) {
+          throw new Error('Supabase record missing after sync.');
+        }
+
+        if (record.content !== 'Web revision while offline') {
+          throw new Error('Latest offline mutation was not promoted to Supabase.');
+        }
+
+        if (mobileSnapshot.records[0]?.content !== record.content) {
+          throw new Error('Mobile device failed to converge with Supabase.');
+        }
+
+        if (webSnapshot.records[0]?.content !== record.content) {
+          throw new Error('Web device failed to converge with Supabase.');
+        }
+      },
+    },
+    {
+      name: 'Conflict detection notifies user when stale data is replayed',
+      successMessage: 'Older offline mutation is rejected and user receives a conflict notification.',
+      async run(env) {
+        env.supabase.initializeRecord(DEFAULT_RECORD_ID, 'Start value', 'system');
+
+        env.mobile.setOnline(false);
+        env.mobile.upsertRecord('Mobile conflicting change');
+        await env.delay(5);
+
+        env.web.upsertRecord('Web fresh change');
+        await env.flushQueues();
+
+        env.mobile.setOnline(true);
+        await env.flushQueues();
+
+        const record = env.supabase.getRecord(DEFAULT_RECORD_ID);
+        const notifications = env.notifications.getSnapshot();
+        const conflictFound = notifications.some((entry) => entry.type === 'conflict');
+
+        if (!conflictFound) {
+          throw new Error('Expected a conflict notification when stale mutation replayed.');
+        }
+
+        if (record?.content !== 'Web fresh change') {
+          throw new Error('Conflict resolution did not preserve the freshest data.');
+        }
+
+        const mobileRecord = env.mobile.snapshot().records[0];
+        if (mobileRecord?.content !== record.content) {
+          throw new Error('Mobile device did not reconcile with server after conflict.');
+        }
+      },
+    },
+  ];
+
+  const supabaseRecordsBody = document.getElementById('supabase-records');
+  const notificationList = document.getElementById('notification-log');
+  const testResultsContainer = document.getElementById('test-results');
+  const runTestsButton = document.getElementById('run-tests');
+
+  const globalNotificationCenter = new NotificationCenter(notificationList);
+  const uiEnvironment = createEnvironment({
+    attachToDom: true,
+    storagePrefix: 'ui',
+    backgroundInterval: 1500,
+    simulatedLatency: 120,
+  });
+
+  function renderSupabase(records) {
+    supabaseRecordsBody.innerHTML = '';
+    if (!records.length) {
+      const empty = document.createElement('tr');
+      empty.innerHTML = '<td colspan="4">No records yet</td>';
+      supabaseRecordsBody.appendChild(empty);
+      return;
+    }
+
+    for (const record of records) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.id}</td>
+        <td>${record.content}</td>
+        <td>${record.updatedBy}</td>
+        <td>${new Date(record.updatedAt).toLocaleTimeString()}</td>
+      `;
+      supabaseRecordsBody.appendChild(row);
+    }
+  }
+
+  function bindDevicePanel(deviceName, deviceStore) {
+    const panel = document.querySelector(`.device-panel[data-device="${deviceName}"]`);
+    const statusBadge = panel.querySelector('.status-badge');
+    const textarea = panel.querySelector('textarea');
+    const queueCount = panel.querySelector('.queue-count');
+    const lastSyncValue = panel.querySelector('.last-sync-value');
+    const toggleButton = panel.querySelector('.toggle-online');
+    const saveButton = panel.querySelector('.save-note');
+
+    textarea.value = '';
+
+    toggleButton.addEventListener('click', () => {
+      deviceStore.setOnline(!deviceStore.online);
+    });
+
+    saveButton.addEventListener('click', () => {
+      const content = textarea.value.trim();
+      if (!content) {
+        globalNotificationCenter.info(`[${deviceStore.label}] Ignored empty update.`);
+        return;
+      }
+      deviceStore.upsertRecord(content);
+      textarea.value = '';
+    });
+
+    deviceStore.subscribe((snapshot) => {
+      statusBadge.classList.toggle('online', snapshot.online);
+      statusBadge.classList.toggle('offline', !snapshot.online);
+      statusBadge.textContent = snapshot.online ? 'Online' : 'Offline';
+      toggleButton.textContent = snapshot.online ? 'Go Offline' : 'Go Online';
+      queueCount.textContent = snapshot.queueSize;
+      lastSyncValue.textContent = snapshot.lastSync
+        ? new Date(snapshot.lastSync).toLocaleTimeString()
+        : 'Pending';
+
+      const latestRecord = snapshot.records.find((record) => record.id === DEFAULT_RECORD_ID);
+      if (!textarea.value && latestRecord) {
+        textarea.placeholder = latestRecord.content;
+      }
+    });
+  }
+
+  uiEnvironment.supabase.subscribe(renderSupabase);
+  bindDevicePanel('mobile', uiEnvironment.mobile);
+  bindDevicePanel('web', uiEnvironment.web);
+
+  const testRunner = new IntegrationTestRunner(integrationTests);
+
+  runTestsButton.addEventListener('click', async () => {
+    runTestsButton.classList.add('loading');
+    runTestsButton.textContent = 'Running...';
+    testResultsContainer.innerHTML = '';
+
+    const results = await testRunner.run();
+    for (const result of results) {
+      const card = document.createElement('div');
+      card.className = `test-result ${result.status}`;
+      card.innerHTML = `
+        <div class="title">${result.name}</div>
+        <p class="details">${result.details}</p>
+      `;
+      testResultsContainer.appendChild(card);
+    }
+
+    runTestsButton.classList.remove('loading');
+    runTestsButton.textContent = 'Run Integration Tests';
+  });
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    navigator.serviceWorker
+      .register('./offline-sync-sw.js')
+      .then(async (registration) => {
+        globalNotificationCenter.info('Service worker registered for offline cache.');
+        if ('sync' in registration) {
+          try {
+            await registration.sync.register('queued-mutations');
+            globalNotificationCenter.info('Background sync registered (queued-mutations).');
+          } catch (error) {
+            globalNotificationCenter.conflict('Background sync unavailable: ' + error.message);
+          }
+        }
+      })
+      .catch((error) => {
+        globalNotificationCenter.conflict('Service worker registration failed: ' + error.message);
+      });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'runQueuedSync') {
+        uiEnvironment.flushQueues();
+      }
+    });
+  }
+
+  uiEnvironment.supabase.initializeRecord(DEFAULT_RECORD_ID, 'Welcome! Edit this note offline to see sync in action.', 'system');
+  registerServiceWorker();
+})();
+</script>
+</body>
+</html>
