@@ -520,7 +520,7 @@
     const moodLevel = document.getElementById('moodLevel');
     const moodStatus = document.getElementById('moodStatus');
 
-    const DATA_URL = '/data/productivity-data.json';
+    const DATA_URL = new URL('data/productivity-data.json', window.location.href).toString();
     const STORAGE_KEY = 'productivity-dashboard-v1';
     const MOOD_KEY = 'productivity-mood-entries';
     const timeSlots = (() => {
@@ -789,6 +789,15 @@
         hydrateUI();
       } catch (error) {
         console.warn('Network fetch failed', error);
+        const injected = typeof window.__PRODUCTIVITY_DATA__ !== 'undefined' ? window.__PRODUCTIVITY_DATA__ : null;
+        if (injected) {
+          appData = injected;
+          persistData(injected);
+          offlineBadge.hidden = false;
+          updateConnectionStatus('Loaded embedded productivity snapshot');
+          hydrateUI();
+          return;
+        }
         const cached = readPersistedData();
         if (cached) {
           appData = cached;

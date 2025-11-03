@@ -1,5 +1,6 @@
 node_modules/
 playwright-report/
 test-results/
+tests/screenshots/
 .trash/
 .DS_Store

@@ -5,7 +5,8 @@ const fs = require('fs');
 const dashboardUrl = 'file://' + path.resolve(__dirname, '..', 'web-productivity-dashboard.html');
 const dataPath = path.resolve(__dirname, '..', 'data', 'productivity-data.json');
 const dataPayload = fs.readFileSync(dataPath, 'utf-8');
-const cachedPayload = JSON.stringify({ data: JSON.parse(dataPayload), timestamp: Date.now() });
+const dataJson = JSON.parse(dataPayload);
+const cachedPayload = JSON.stringify({ data: dataJson, timestamp: Date.now() });
 
 const ensureScreenshotsDir = () => {
   const screenDir = path.resolve(__dirname, 'screenshots');
@@ -24,6 +25,10 @@ test.describe('Productivity dashboard', () => {
         body: dataPayload,
       });
     });
+
+    await page.addInitScript(({ payload }) => {
+      window.__PRODUCTIVITY_DATA__ = payload;
+    }, { payload: dataJson });
 
     await page.goto(dashboardUrl);
 
