@@ -1,0 +1,16 @@
+# Runtime artifacts
+*.log
+*.tmp
+*.cache
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# npm / node
+node_modules/
