@@ -1,0 +1,1235 @@
+openapi: 3.0.3
+info:
+  title: Personal Productivity API
+  version: 1.0.0
+  description: |
+    APIs for managing tasks, subtasks, routines, habits, time blocking, important dates, mood tracking,
+    proactive scheduling, and daily summaries.
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /tasks:
+    get:
+      summary: List tasks
+      parameters:
+        - in: query
+          name: prioritize
+          schema:
+            type: boolean
+          description: Sort tasks using prioritization engine
+        - in: query
+          name: includeScores
+          schema:
+            type: boolean
+          description: Include priority score metadata in the response
+      responses:
+        '200':
+          description: Task collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+    post:
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateInput'
+      responses:
+        '201':
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /tasks/{taskId}:
+    get:
+      summary: Fetch task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateInput'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tasks/{taskId}/breakdown:
+    post:
+      summary: Regenerate automatic task breakdown
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Updated task with regenerated subtasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tasks/{taskId}/subtasks:
+    post:
+      summary: Create subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskCreateInput'
+      responses:
+        '201':
+          description: Created subtask
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /tasks/{taskId}/subtasks/{subtaskId}:
+    put:
+      summary: Update subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/SubtaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskUpdateInput'
+      responses:
+        '200':
+          description: Updated subtask
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/SubtaskId'
+      responses:
+        '204':
+          description: Subtask deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /routines:
+    get:
+      summary: List routines
+      responses:
+        '200':
+          description: Routine collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineListResponse'
+    post:
+      summary: Create routine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineInput'
+      responses:
+        '201':
+          description: Created routine
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /routines/{routineId}:
+    get:
+      summary: Fetch routine
+      parameters:
+        - $ref: '#/components/parameters/RoutineId'
+      responses:
+        '200':
+          description: Routine details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update routine
+      parameters:
+        - $ref: '#/components/parameters/RoutineId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineInput'
+      responses:
+        '200':
+          description: Updated routine
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete routine
+      parameters:
+        - $ref: '#/components/parameters/RoutineId'
+      responses:
+        '204':
+          description: Routine deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /habits:
+    get:
+      summary: List habits
+      responses:
+        '200':
+          description: Habit collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitListResponse'
+    post:
+      summary: Create habit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitInput'
+      responses:
+        '201':
+          description: Created habit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /habits/{habitId}:
+    get:
+      summary: Fetch habit
+      parameters:
+        - $ref: '#/components/parameters/HabitId'
+      responses:
+        '200':
+          description: Habit details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update habit
+      parameters:
+        - $ref: '#/components/parameters/HabitId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitInput'
+      responses:
+        '200':
+          description: Updated habit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete habit
+      parameters:
+        - $ref: '#/components/parameters/HabitId'
+      responses:
+        '204':
+          description: Habit deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /time-blocks:
+    get:
+      summary: List time blocks
+      responses:
+        '200':
+          description: Time-block collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeBlockListResponse'
+    post:
+      summary: Create time block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeBlockInput'
+      responses:
+        '201':
+          description: Created time block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeBlockResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /time-blocks/{timeBlockId}:
+    get:
+      summary: Fetch time block
+      parameters:
+        - $ref: '#/components/parameters/TimeBlockId'
+      responses:
+        '200':
+          description: Time block details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeBlockResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update time block
+      parameters:
+        - $ref: '#/components/parameters/TimeBlockId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeBlockInput'
+      responses:
+        '200':
+          description: Updated time block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeBlockResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete time block
+      parameters:
+        - $ref: '#/components/parameters/TimeBlockId'
+      responses:
+        '204':
+          description: Time block deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /important-dates:
+    get:
+      summary: List important dates
+      responses:
+        '200':
+          description: Important date collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportantDateListResponse'
+    post:
+      summary: Create important date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportantDateInput'
+      responses:
+        '201':
+          description: Created important date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportantDateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /important-dates/{importantDateId}:
+    get:
+      summary: Fetch important date
+      parameters:
+        - $ref: '#/components/parameters/ImportantDateId'
+      responses:
+        '200':
+          description: Important date details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportantDateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update important date
+      parameters:
+        - $ref: '#/components/parameters/ImportantDateId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportantDateInput'
+      responses:
+        '200':
+          description: Updated important date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportantDateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete important date
+      parameters:
+        - $ref: '#/components/parameters/ImportantDateId'
+      responses:
+        '204':
+          description: Important date deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moods:
+    get:
+      summary: List mood entries
+      responses:
+        '200':
+          description: Mood collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodListResponse'
+    post:
+      summary: Create mood entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoodInput'
+      responses:
+        '201':
+          description: Created mood entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodResponse'
+  /moods/{moodId}:
+    get:
+      summary: Fetch mood entry
+      parameters:
+        - $ref: '#/components/parameters/MoodId'
+      responses:
+        '200':
+          description: Mood entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update mood entry
+      parameters:
+        - $ref: '#/components/parameters/MoodId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoodInput'
+      responses:
+        '200':
+          description: Updated mood entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete mood entry
+      parameters:
+        - $ref: '#/components/parameters/MoodId'
+      responses:
+        '204':
+          description: Mood entry deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /scheduling/run:
+    post:
+      summary: Execute scheduling engine
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+                  description: Date to use for proactive planning
+      responses:
+        '200':
+          description: Reminders and suggestions generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchedulingPlanResponse'
+  /reminders:
+    get:
+      summary: List reminders
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Filter reminders by ISO date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Reminder collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderListResponse'
+  /suggestions:
+    get:
+      summary: List proactive suggestions
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Filter suggestions by ISO date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Suggestion collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionListResponse'
+  /summary/daily:
+    post:
+      summary: Generate daily summary
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+                  description: Date to summarize
+      responses:
+        '200':
+          description: Generated summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummaryResponse'
+  /summary/daily/{date}:
+    get:
+      summary: Fetch summary by date
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+          description: ISO date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Summary for the requested date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummaryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /summary:
+    get:
+      summary: List generated summaries
+      responses:
+        '200':
+          description: Summary collection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailySummary'
+  /jobs/morning-summary/run:
+    post:
+      summary: Trigger background morning summary job
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+                  description: Date override for job execution
+      responses:
+        '200':
+          description: Result of background job run
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MorningJobResponse'
+components:
+  parameters:
+    TaskId:
+      in: path
+      name: taskId
+      required: true
+      schema:
+        type: string
+    SubtaskId:
+      in: path
+      name: subtaskId
+      required: true
+      schema:
+        type: string
+    RoutineId:
+      in: path
+      name: routineId
+      required: true
+      schema:
+        type: string
+    HabitId:
+      in: path
+      name: habitId
+      required: true
+      schema:
+        type: string
+    TimeBlockId:
+      in: path
+      name: timeBlockId
+      required: true
+      schema:
+        type: string
+    ImportantDateId:
+      in: path
+      name: importantDateId
+      required: true
+      schema:
+        type: string
+    MoodId:
+      in: path
+      name: moodId
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        estimatedMinutes:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        priorityScore:
+          type: integer
+          nullable: true
+        subtasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subtask'
+    Subtask:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        order:
+          type: integer
+        estimatedMinutes:
+          type: integer
+          nullable: true
+    TaskCreateInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        estimatedMinutes:
+          type: integer
+        autoBreakdown:
+          type: boolean
+    TaskUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/TaskCreateInput'
+    TaskResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Task'
+    TaskListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    SubtaskCreateInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+        order:
+          type: integer
+        estimatedMinutes:
+          type: integer
+    SubtaskUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/SubtaskCreateInput'
+    SubtaskResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Subtask'
+    Routine:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        frequency:
+          type: string
+        anchorTime:
+          type: string
+          nullable: true
+        tasks:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RoutineInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        frequency:
+          type: string
+        anchorTime:
+          type: string
+        tasks:
+          type: array
+          items:
+            type: string
+    RoutineResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Routine'
+    RoutineListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Routine'
+    Habit:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        cadence:
+          type: string
+        cues:
+          type: array
+          items:
+            type: string
+        rewards:
+          type: array
+          items:
+            type: string
+        streak:
+          type: integer
+        lastPerformed:
+          type: string
+          format: date
+          nullable: true
+        metrics:
+          type: object
+    HabitInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        cadence:
+          type: string
+        cues:
+          type: array
+          items:
+            type: string
+        rewards:
+          type: array
+          items:
+            type: string
+        streak:
+          type: integer
+        lastPerformed:
+          type: string
+          format: date
+        metrics:
+          type: object
+    HabitResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Habit'
+    HabitListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Habit'
+    TimeBlock:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        tasks:
+          type: array
+          items:
+            type: string
+        focusArea:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TimeBlockInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        tasks:
+          type: array
+          items:
+            type: string
+        focusArea:
+          type: string
+    TimeBlockResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TimeBlock'
+    TimeBlockListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeBlock'
+    ImportantDate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ImportantDateInput:
+      type: object
+      required: [name, date]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+    ImportantDateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ImportantDate'
+    ImportantDateListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportantDate'
+    Mood:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        rating:
+          type: integer
+          nullable: true
+        note:
+          type: string
+        energyLevel:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MoodInput:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        rating:
+          type: integer
+        note:
+          type: string
+        energyLevel:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    MoodResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Mood'
+    MoodListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mood'
+    Reminder:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        type:
+          type: string
+        refId:
+          type: string
+        message:
+          type: string
+        scheduledFor:
+          type: string
+          format: date-time
+          nullable: true
+        priorityScore:
+          type: integer
+          nullable: true
+    Suggestion:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        type:
+          type: string
+        refId:
+          type: string
+        message:
+          type: string
+        priorityScore:
+          type: integer
+          nullable: true
+    SchedulingPlan:
+      type: object
+      properties:
+        reminders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reminder'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+    SchedulingPlanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SchedulingPlan'
+    ReminderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reminder'
+    SuggestionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+    DailySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        tasksDueToday:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        overdueTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        focusRecommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        routinesToday:
+          type: array
+          items:
+            $ref: '#/components/schemas/Routine'
+        upcomingImportantDates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportantDate'
+        moodEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mood'
+        timeBlocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeBlock'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+    DailySummaryResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/DailySummary'
+    MorningJobResult:
+      type: object
+      properties:
+        summary:
+          $ref: '#/components/schemas/DailySummary'
+        reminders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reminder'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+    MorningJobResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MorningJobResult'
