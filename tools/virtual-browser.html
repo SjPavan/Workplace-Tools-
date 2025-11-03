@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Browser - Workplace Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        main {
+            padding: 30px;
+        }
+        
+        .browser-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .url-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .browser-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            height: 600px;
+        }
+        
+        .iframe-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #e1e8ed;
+            position: relative;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .ai-assistant {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ai-header {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+        
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            min-height: 200px;
+        }
+        
+        .ai-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .ai-message.user {
+            background: #667eea;
+            color: white;
+            margin-left: 20px;
+        }
+        
+        .ai-message.assistant {
+            background: white;
+            border: 1px solid #e1e8ed;
+            margin-right: 20px;
+        }
+        
+        .ai-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .ai-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .ai-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .ai-send-btn {
+            padding: 10px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .ai-send-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .status-bar {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-text {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.loading {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .offline-indicator.offline {
+            background: #dc3545;
+            display: block;
+        }
+        
+        .offline-indicator.online {
+            background: #28a745;
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .browser-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .iframe-container {
+                height: 400px;
+            }
+            
+            .ai-assistant {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Virtual Browser</h1>
+            <a href="../index.html" class="back-link">← Back to Tools</a>
+        </header>
+        
+        <main>
+            <section class="browser-controls">
+                <input type="url" class="url-input" id="urlInput" placeholder="Enter URL (e.g., https://example.com)" value="https://example.com">
+                <button class="btn" id="navigateBtn">Navigate</button>
+                <button class="btn" id="backBtn">Back</button>
+                <button class="btn" id="refreshBtn">Refresh</button>
+            </section>
+            
+            <div class="browser-container">
+                <div class="iframe-container">
+                    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <iframe id="browserFrame" src="https://example.com"></iframe>
+                </div>
+                
+                <aside class="ai-assistant">
+                    <div class="ai-header">🤖 AI Assistant</div>
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-message assistant">
+                            Hello! I can help you analyze the current webpage. Ask me anything about the content you're viewing!
+                        </div>
+                    </div>
+                    <div class="ai-input-container">
+                        <input type="text" class="ai-input" id="aiInput" placeholder="Ask about the current page...">
+                        <button class="ai-send-btn" id="aiSendBtn">Send</button>
+                    </div>
+                </aside>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-text">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="status-text" id="currentUrl">https://example.com</div>
+            </div>
+        </main>
+    </div>
+    
+    <div class="offline-indicator" id="offlineIndicator">
+        <span id="offlineText">Online</span>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Online/Offline Status Detection
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        const offlineText = document.getElementById('offlineText');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineIndicator.classList.remove('offline');
+                offlineIndicator.classList.add('online');
+                offlineText.textContent = 'Online';
+            } else {
+                offlineIndicator.classList.remove('online');
+                offlineIndicator.classList.add('offline');
+                offlineText.textContent = 'Offline';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Virtual Browser Functionality
+        const urlInput = document.getElementById('urlInput');
+        const navigateBtn = document.getElementById('navigateBtn');
+        const backBtn = document.getElementById('backBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const browserFrame = document.getElementById('browserFrame');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const currentUrlSpan = document.getElementById('currentUrl');
+        
+        // AI Assistant Elements
+        const aiMessages = document.getElementById('aiMessages');
+        const aiInput = document.getElementById('aiInput');
+        const aiSendBtn = document.getElementById('aiSendBtn');
+        
+        let navigationHistory = ['https://example.com'];
+        let currentHistoryIndex = 0;
+
+        function showLoading() {
+            loadingOverlay.style.display = 'flex';
+            statusIndicator.classList.add('loading');
+            statusText.textContent = 'Loading...';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+            statusIndicator.classList.remove('loading');
+            statusText.textContent = 'Ready';
+        }
+
+        function navigateToUrl(url) {
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            
+            showLoading();
+            currentUrlSpan.textContent = url;
+            browserFrame.src = url;
+            
+            // Update history
+            if (currentHistoryIndex < navigationHistory.length - 1) {
+                navigationHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
+            }
+            navigationHistory.push(url);
+            currentHistoryIndex = navigationHistory.length - 1;
+            
+            updateNavigationButtons();
+        }
+
+        function updateNavigationButtons() {
+            backBtn.disabled = currentHistoryIndex === 0;
+            // Note: Forward button would need to be added
+        }
+
+        function goBack() {
+            if (currentHistoryIndex > 0) {
+                currentHistoryIndex--;
+                const url = navigationHistory[currentHistoryIndex];
+                urlInput.value = url;
+                navigateToUrl(url);
+            }
+        }
+
+        function refresh() {
+            showLoading();
+            browserFrame.src = browserFrame.src;
+        }
+
+        // Event Listeners
+        navigateBtn.addEventListener('click', () => {
+            navigateToUrl(urlInput.value);
+        });
+
+        backBtn.addEventListener('click', goBack);
+        refreshBtn.addEventListener('click', refresh);
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                navigateToUrl(urlInput.value);
+            }
+        });
+
+        browserFrame.addEventListener('load', () => {
+            hideLoading();
+            try {
+                const iframeDoc = browserFrame.contentDocument || browserFrame.contentWindow.document;
+                const title = iframeDoc.title || 'Unknown Page';
+                statusText.textContent = `Loaded: ${title}`;
+            } catch (e) {
+                // Cross-origin restriction - can't access iframe content
+                statusText.textContent = 'Page loaded';
+            }
+        });
+
+        browserFrame.addEventListener('error', () => {
+            hideLoading();
+            statusText.textContent = 'Error loading page';
+        });
+
+        // AI Assistant Functionality
+        function addAIMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${isUser ? 'user' : 'assistant'}`;
+            messageDiv.textContent = message;
+            aiMessages.appendChild(messageDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+
+        function generateAIResponse(userMessage) {
+            // Simulated AI responses for demo purposes
+            const responses = [
+                "That's an interesting question about the current page. Based on what I can see, this appears to be a standard webpage with typical HTML structure.",
+                "I notice this page contains various HTML elements. The content seems to be well-structured with proper semantic markup.",
+                "Looking at the current page, I can see it follows web development best practices with responsive design considerations.",
+                "This webpage appears to be accessible and follows modern web standards. The layout seems clean and user-friendly.",
+                "Based on the page content, this looks like a well-designed website with good user experience in mind."
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        function sendAIMessage() {
+            const message = aiInput.value.trim();
+            if (message) {
+                addAIMessage(message, true);
+                aiInput.value = '';
+                
+                // Simulate AI response delay
+                setTimeout(() => {
+                    const response = generateAIResponse(message);
+                    addAIMessage(response);
+                }, 1000);
+            }
+        }
+
+        aiSendBtn.addEventListener('click', sendAIMessage);
+        aiInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendAIMessage();
+            }
+        });
+
+        // Initialize
+        updateNavigationButtons();
+    </script>
+</body>
+</html>

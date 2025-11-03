@@ -1,0 +1,27 @@
+{
+  "name": "workplace-tools",
+  "version": "1.0.0",
+  "description": "A collection of useful utilities for your daily work",
+  "main": "index.html",
+  "scripts": {
+    "update-cache": "node update-cache.js",
+    "start": "python3 -m http.server 8000",
+    "serve": "npx serve . -p 8000",
+    "build": "npm run update-cache"
+  },
+  "keywords": [
+    "pwa",
+    "tools",
+    "utilities",
+    "workplace",
+    "offline"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

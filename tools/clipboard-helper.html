@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipboard Helper - Workplace Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        main {
+            padding: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+        
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn.secondary {
+            background: #6c757d;
+        }
+        
+        .btn.secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .btn.success:hover {
+            background: #218838;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        .btn.danger:hover {
+            background: #c82333;
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: background 0.3s ease;
+        }
+        
+        .history-item:hover {
+            background: #e9ecef;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-content {
+            flex: 1;
+            margin-right: 15px;
+            word-break: break-word;
+        }
+        
+        .history-text {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .history-meta {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        .format-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .format-option {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .format-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .format-option.selected {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+        
+        .format-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .format-description {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .preview-area {
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .offline-indicator.offline {
+            background: #dc3545;
+            display: block;
+        }
+        
+        .offline-indicator.online {
+            background: #28a745;
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .format-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-item {
+                flex-direction: column;
+            }
+            
+            .history-actions {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Clipboard Helper</h1>
+            <a href="../index.html" class="back-link">← Back to Tools</a>
+        </header>
+        
+        <main>
+            <div class="tabs">
+                <button class="tab active" data-tab="current">Current Clipboard</button>
+                <button class="tab" data-tab="history">Clipboard History</button>
+                <button class="tab" data-tab="formatter">Text Formatter</button>
+            </div>
+            
+            <div id="statusMessage" class="status-message"></div>
+            
+            <!-- Current Clipboard Tab -->
+            <div id="current" class="tab-content active">
+                <div class="section">
+                    <h2 class="section-title">Current Clipboard Content</h2>
+                    <div class="input-group">
+                        <label for="currentClipboard">Clipboard content:</label>
+                        <textarea id="currentClipboard" placeholder="Click 'Read Clipboard' to get current content..." readonly></textarea>
+                    </div>
+                    <div>
+                        <button class="btn" id="readClipboardBtn">📋 Read Clipboard</button>
+                        <button class="btn secondary" id="copyToClipboardBtn">📄 Copy to Clipboard</button>
+                        <button class="btn success" id="clearClipboardBtn">🗑️ Clear Clipboard</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Clipboard History Tab -->
+            <div id="history" class="tab-content">
+                <div class="section">
+                    <h2 class="section-title">Clipboard History</h2>
+                    <div>
+                        <button class="btn" id="saveToHistoryBtn">💾 Save Current to History</button>
+                        <button class="btn danger" id="clearHistoryBtn">🗑️ Clear History</button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <!-- History items will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Text Formatter Tab -->
+            <div id="formatter" class="tab-content">
+                <div class="section">
+                    <h2 class="section-title">Text Formatter</h2>
+                    <div class="input-group">
+                        <label for="formatInput">Input text:</label>
+                        <textarea id="formatInput" placeholder="Enter text to format...">This is a sample text to format with various options.</textarea>
+                    </div>
+                    
+                    <div class="format-options">
+                        <div class="format-option" data-format="uppercase">
+                            <div class="format-title">UPPERCASE</div>
+                            <div class="format-description">Convert all text to uppercase</div>
+                        </div>
+                        <div class="format-option" data-format="lowercase">
+                            <div class="format-title">lowercase</div>
+                            <div class="format-description">Convert all text to lowercase</div>
+                        </div>
+                        <div class="format-option" data-format="title">
+                            <div class="format-title">Title Case</div>
+                            <div class="format-description">Capitalize first letter of each word</div>
+                        </div>
+                        <div class="format-option" data-format="sentence">
+                            <div class="format-title">Sentence case</div>
+                            <div class="format-description">Capitalize first letter of sentence</div>
+                        </div>
+                        <div class="format-option" data-format="camel">
+                            <div class="format-title">camelCase</div>
+                            <div class="format-description">Convert to camelCase format</div>
+                        </div>
+                        <div class="format-option" data-format="snake">
+                            <div class="format-title">snake_case</div>
+                            <div class="format-description">Convert to snake_case format</div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="formatPreview">Preview:</label>
+                        <div class="preview-area" id="formatPreview">This is a sample text to format with various options.</div>
+                    </div>
+                    
+                    <div>
+                        <button class="btn" id="applyFormatBtn">✨ Apply Format</button>
+                        <button class="btn secondary" id="copyFormattedBtn">📋 Copy Formatted</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div class="offline-indicator" id="offlineIndicator">
+        <span id="offlineText">Online</span>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Online/Offline Status Detection
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        const offlineText = document.getElementById('offlineText');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineIndicator.classList.remove('offline');
+                offlineIndicator.classList.add('online');
+                offlineText.textContent = 'Online';
+            } else {
+                offlineIndicator.classList.remove('online');
+                offlineIndicator.classList.add('offline');
+                offlineText.textContent = 'Offline';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Tab Functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // Status Message Functionality
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            
+            setTimeout(() => {
+                statusEl.className = 'status-message';
+            }, 3000);
+        }
+
+        // Current Clipboard Functionality
+        const currentClipboard = document.getElementById('currentClipboard');
+        const readClipboardBtn = document.getElementById('readClipboardBtn');
+        const copyToClipboardBtn = document.getElementById('copyToClipboardBtn');
+        const clearClipboardBtn = document.getElementById('clearClipboardBtn');
+
+        async function readClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                currentClipboard.value = text;
+                showStatus('Clipboard content loaded successfully!', 'success');
+            } catch (err) {
+                showStatus('Failed to read clipboard: ' + err.message, 'error');
+            }
+        }
+
+        async function copyToClipboard() {
+            try {
+                const text = currentClipboard.value;
+                await navigator.clipboard.writeText(text);
+                showStatus('Text copied to clipboard successfully!', 'success');
+            } catch (err) {
+                showStatus('Failed to copy to clipboard: ' + err.message, 'error');
+            }
+        }
+
+        async function clearClipboard() {
+            try {
+                await navigator.clipboard.writeText('');
+                currentClipboard.value = '';
+                showStatus('Clipboard cleared successfully!', 'success');
+            } catch (err) {
+                showStatus('Failed to clear clipboard: ' + err.message, 'error');
+            }
+        }
+
+        readClipboardBtn.addEventListener('click', readClipboard);
+        copyToClipboardBtn.addEventListener('click', copyToClipboard);
+        clearClipboardBtn.addEventListener('click', clearClipboard);
+
+        // Clipboard History Functionality
+        let clipboardHistory = JSON.parse(localStorage.getItem('clipboardHistory') || '[]');
+        const historyList = document.getElementById('historyList');
+        const saveToHistoryBtn = document.getElementById('saveToHistoryBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            
+            if (clipboardHistory.length === 0) {
+                historyList.innerHTML = '<div class="history-item"><div class="history-content">No clipboard history yet. Start saving items!</div></div>';
+                return;
+            }
+            
+            clipboardHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-content">
+                        <div class="history-text">${item.text}</div>
+                        <div class="history-meta">${new Date(item.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn btn-small btn-secondary" onclick="loadFromHistory(${index})">Load</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteFromHistory(${index})">Delete</button>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function saveToHistory() {
+            const text = currentClipboard.value.trim();
+            if (!text) {
+                showStatus('No clipboard content to save!', 'error');
+                return;
+            }
+            
+            const historyItem = {
+                text: text,
+                timestamp: Date.now()
+            };
+            
+            clipboardHistory.unshift(historyItem);
+            if (clipboardHistory.length > 50) {
+                clipboardHistory = clipboardHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('clipboardHistory', JSON.stringify(clipboardHistory));
+            renderHistory();
+            showStatus('Saved to clipboard history!', 'success');
+        }
+
+        function loadFromHistory(index) {
+            const item = clipboardHistory[index];
+            currentClipboard.value = item.text;
+            showStatus('Loaded from history!', 'info');
+        }
+
+        function deleteFromHistory(index) {
+            clipboardHistory.splice(index, 1);
+            localStorage.setItem('clipboardHistory', JSON.stringify(clipboardHistory));
+            renderHistory();
+            showStatus('Deleted from history!', 'info');
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all clipboard history?')) {
+                clipboardHistory = [];
+                localStorage.setItem('clipboardHistory', JSON.stringify(clipboardHistory));
+                renderHistory();
+                showStatus('Clipboard history cleared!', 'success');
+            }
+        }
+
+        saveToHistoryBtn.addEventListener('click', saveToHistory);
+        clearHistoryBtn.addEventListener('click', clearHistory);
+
+        // Make functions globally available for onclick handlers
+        window.loadFromHistory = loadFromHistory;
+        window.deleteFromHistory = deleteFromHistory;
+
+        // Text Formatter Functionality
+        const formatInput = document.getElementById('formatInput');
+        const formatPreview = document.getElementById('formatPreview');
+        const applyFormatBtn = document.getElementById('applyFormatBtn');
+        const copyFormattedBtn = document.getElementById('copyFormattedBtn');
+        const formatOptions = document.querySelectorAll('.format-option');
+        let selectedFormat = null;
+
+        formatOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                formatOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedFormat = option.dataset.format;
+                updatePreview();
+            });
+        });
+
+        function formatText(text, format) {
+            switch (format) {
+                case 'uppercase':
+                    return text.toUpperCase();
+                case 'lowercase':
+                    return text.toLowerCase();
+                case 'title':
+                    return text.replace(/\b\w/g, char => char.toUpperCase());
+                case 'sentence':
+                    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+                case 'camel':
+                    return text.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+                        return index === 0 ? word.toLowerCase() : word.toUpperCase();
+                    }).replace(/\s+/g, '');
+                case 'snake':
+                    return text.toLowerCase().replace(/\s+/g, '_');
+                default:
+                    return text;
+            }
+        }
+
+        function updatePreview() {
+            const text = formatInput.value;
+            if (selectedFormat) {
+                formatPreview.textContent = formatText(text, selectedFormat);
+            } else {
+                formatPreview.textContent = text;
+            }
+        }
+
+        function applyFormat() {
+            if (!selectedFormat) {
+                showStatus('Please select a format option!', 'error');
+                return;
+            }
+            
+            const text = formatInput.value;
+            const formatted = formatText(text, selectedFormat);
+            formatInput.value = formatted;
+            updatePreview();
+            showStatus('Format applied successfully!', 'success');
+        }
+
+        async function copyFormatted() {
+            try {
+                await navigator.clipboard.writeText(formatPreview.textContent);
+                showStatus('Formatted text copied to clipboard!', 'success');
+            } catch (err) {
+                showStatus('Failed to copy: ' + err.message, 'error');
+            }
+        }
+
+        formatInput.addEventListener('input', updatePreview);
+        applyFormatBtn.addEventListener('click', applyFormat);
+        copyFormattedBtn.addEventListener('click', copyFormatted);
+
+        // Initialize
+        renderHistory();
+        updatePreview();
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workplace Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 40px 30px;
+        }
+        
+        .tool-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .tool-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .tool-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .tool-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .tool-description {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .offline-indicator.offline {
+            background: #dc3545;
+            display: block;
+        }
+        
+        .offline-indicator.online {
+            background: #28a745;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Workplace Tools</h1>
+            <p class="subtitle">A collection of useful utilities for your daily work</p>
+        </header>
+        
+        <main class="tools-grid">
+            <a href="tools/case-converter.html" class="tool-card">
+                <div class="tool-icon">📝</div>
+                <h3 class="tool-title">Case Converter</h3>
+                <p class="tool-description">Convert text between different cases: camelCase, PascalCase, snake_case, kebab-case, and more.</p>
+            </a>
+            
+            <a href="tools/title-converter.html" class="tool-card">
+                <div class="tool-icon">📋</div>
+                <h3 class="tool-title">Title Converter</h3>
+                <p class="tool-description">Format titles and headings with proper capitalization rules and styling options.</p>
+            </a>
+            
+            <a href="tools/virtual-browser.html" class="tool-card">
+                <div class="tool-icon">🌐</div>
+                <h3 class="tool-title">Virtual Browser</h3>
+                <p class="tool-description">Browse websites in an isolated environment with AI assistant integration.</p>
+            </a>
+            
+            <a href="tools/clipboard-helper.html" class="tool-card">
+                <div class="tool-icon">📎</div>
+                <h3 class="tool-title">Clipboard Helper</h3>
+                <p class="tool-description">Manage clipboard history and format text for various applications.</p>
+            </a>
+        </main>
+    </div>
+    
+    <div class="offline-indicator" id="offlineIndicator">
+        <span id="offlineText">Online</span>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Online/Offline Status Detection
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        const offlineText = document.getElementById('offlineText');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineIndicator.classList.remove('offline');
+                offlineIndicator.classList.add('online');
+                offlineText.textContent = 'Online';
+            } else {
+                offlineIndicator.classList.remove('online');
+                offlineIndicator.classList.add('offline');
+                offlineText.textContent = 'Offline';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
