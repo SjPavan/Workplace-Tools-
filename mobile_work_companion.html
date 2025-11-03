@@ -527,6 +527,22 @@
             }
         }
 
+        @media (orientation: landscape) and (min-width: 720px) {
+            main.modules {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+                padding: calc(12px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px));
+            }
+            .module-card {
+                margin: 0;
+                height: 100%;
+            }
+            .module-card.qa-card {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (min-width: 600px) {
             body {
                 padding: calc(24px + env(safe-area-inset-top, 0px)) 0 calc(24px + env(safe-area-inset-bottom, 0px));
