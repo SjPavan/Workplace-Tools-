@@ -1,0 +1,46 @@
+{
+  "dailyPlanner": [
+    { "time": "08:00", "title": "Team Standup", "category": "Meetings" },
+    { "time": "09:30", "title": "Deep Work: Feature Spec", "category": "Focus" },
+    { "time": "11:00", "title": "Code Reviews", "category": "Collaboration" }
+  ],
+  "tasks": [
+    { "id": "t1", "title": "Draft product vision doc", "priority": "High", "duration": 90 },
+    { "id": "t2", "title": "Review analytics dashboard", "priority": "Medium", "duration": 45 },
+    { "id": "t3", "title": "Sync with marketing", "priority": "Medium", "duration": 30 },
+    { "id": "t4", "title": "Plan sprint retrospective", "priority": "Low", "duration": 60 }
+  ],
+  "routines": [
+    { "title": "Morning startup", "items": ["Inbox zero", "Prioritize top 3 tasks", "15-min learning"] },
+    { "title": "Afternoon reset", "items": ["Walk & stretch", "Review OKRs", "Share progress update"] }
+  ],
+  "habits": [
+    { "title": "Water", "target": 8, "completed": 6, "unit": "glasses" },
+    { "title": "Focus sessions", "target": 4, "completed": 2, "unit": "sessions" },
+    { "title": "Breaks", "target": 5, "completed": 3, "unit": "breaks" }
+  ],
+  "habitHistory": [
+    { "day": "Mon", "completion": 72 },
+    { "day": "Tue", "completion": 65 },
+    { "day": "Wed", "completion": 82 },
+    { "day": "Thu", "completion": 58 },
+    { "day": "Fri", "completion": 91 },
+    { "day": "Sat", "completion": 66 },
+    { "day": "Sun", "completion": 74 }
+  ],
+  "moodPrompts": [
+    "Celebrate a quick win from today.",
+    "Which habit needs extra attention tomorrow?",
+    "What energized you in the last focus block?"
+  ],
+  "calendarEvents": [
+    { "date": "2024-10-30", "title": "Design review", "type": "meeting" },
+    { "date": "2024-10-31", "title": "Launch checklist", "type": "deadline" },
+    { "date": "2024-11-02", "title": "Team offsite", "type": "event" }
+  ],
+  "suggestions": [
+    { "id": "s1", "title": "Schedule a focus block for the vision doc", "reason": "High priority task pending" },
+    { "id": "s2", "title": "Log today's hydration progress", "reason": "Hydration habit below target" },
+    { "id": "s3", "title": "Touch base with marketing ahead of launch", "reason": "Upcoming deadline on Thursday" }
+  ]
+}
