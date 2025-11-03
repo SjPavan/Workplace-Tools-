@@ -925,6 +925,17 @@
             return display.replace(/\b\w/g, char => char.toUpperCase());
         }
 
+        function ensureEmptyListNode(id, message) {
+            let node = document.getElementById(id);
+            if (!node) {
+                node = document.createElement('li');
+                node.id = id;
+                node.className = 'empty-state';
+                node.textContent = message;
+            }
+            return node;
+        }
+
         function saveState() {
             saveToStorage(STORAGE_KEYS.state, AppState.state);
         }
@@ -1197,12 +1208,14 @@
 
         function renderPlanner() {
             const list = document.getElementById('plannerList');
+            const empty = ensureEmptyListNode('plannerEmpty', 'No plans yet — design your day.');
             list.innerHTML = '';
             if (!AppState.state.dailyPlanner.length) {
-                document.getElementById('plannerEmpty').style.display = 'block';
+                empty.style.display = 'block';
+                list.appendChild(empty);
                 return;
             }
-            document.getElementById('plannerEmpty').style.display = 'none';
+            empty.style.display = 'none';
             AppState.state.dailyPlanner
                 .slice()
                 .sort((a, b) => a.time.localeCompare(b.time))
@@ -1233,12 +1246,14 @@
 
         function renderRoutines() {
             const list = document.getElementById('routineList');
+            const empty = ensureEmptyListNode('routineEmpty', 'Capture your first routine to automate momentum.');
             list.innerHTML = '';
             if (!AppState.state.routines.length) {
-                document.getElementById('routineEmpty').style.display = 'block';
+                empty.style.display = 'block';
+                list.appendChild(empty);
                 return;
             }
-            document.getElementById('routineEmpty').style.display = 'none';
+            empty.style.display = 'none';
             AppState.state.routines
                 .slice()
                 .sort((a, b) => a.name.localeCompare(b.name))
@@ -1270,12 +1285,14 @@
 
         function renderTasks() {
             const list = document.getElementById('taskList');
+            const empty = ensureEmptyListNode('taskEmpty', 'Create tasks to maintain momentum.');
             list.innerHTML = '';
             if (!AppState.state.tasks.length) {
-                document.getElementById('taskEmpty').style.display = 'block';
+                empty.style.display = 'block';
+                list.appendChild(empty);
                 return;
             }
-            document.getElementById('taskEmpty').style.display = 'none';
+            empty.style.display = 'none';
             AppState.state.tasks
                 .slice()
                 .sort((a, b) => {
@@ -1311,12 +1328,14 @@
 
         function renderHabits() {
             const list = document.getElementById('habitList');
+            const empty = ensureEmptyListNode('habitEmpty', 'Define sustaining habits and check-in consistently.');
             list.innerHTML = '';
             if (!AppState.state.habits.length) {
-                document.getElementById('habitEmpty').style.display = 'block';
+                empty.style.display = 'block';
+                list.appendChild(empty);
                 return;
             }
-            document.getElementById('habitEmpty').style.display = 'none';
+            empty.style.display = 'none';
             AppState.state.habits
                 .slice()
                 .sort((a, b) => a.name.localeCompare(b.name))
@@ -1347,12 +1366,14 @@
 
         function renderMoods() {
             const list = document.getElementById('moodList');
+            const empty = ensureEmptyListNode('moodEmpty', 'Track how you’re feeling to unlock insights.');
             list.innerHTML = '';
             if (!AppState.state.moods.length) {
-                document.getElementById('moodEmpty').style.display = 'block';
+                empty.style.display = 'block';
+                list.appendChild(empty);
                 return;
             }
-            document.getElementById('moodEmpty').style.display = 'none';
+            empty.style.display = 'none';
             AppState.state.moods
                 .slice()
                 .sort((a, b) => b.date.localeCompare(a.date))
