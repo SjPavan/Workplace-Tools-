@@ -5,7 +5,7 @@ const { prioritizeTasks, computePriorityScore } = require('../utils/prioritizati
 
 const cloneTask = (task) => ({
   ...task,
-  subtasks: task.subtasks.map((sub) => ({ ...sub }))
+  subtasks: task.subtasks.map(({ generated, ...sub }) => ({ ...sub }))
 });
 
 const listTasks = ({ prioritize = false, baseDate = new Date(), includeScores = false } = {}) => {
@@ -79,7 +79,9 @@ const updateTask = (id, payload) => {
   if (payload.tags !== undefined) existing.tags = Array.isArray(payload.tags) ? payload.tags : existing.tags;
   if (payload.estimatedMinutes !== undefined) existing.estimatedMinutes = payload.estimatedMinutes;
   if (payload.autoBreakdown) {
-    existing.subtasks = autoBreakdown(existing);
+    const manualSubtasks = existing.subtasks.filter((sub) => !sub.generated);
+    const generatedSubtasks = autoBreakdown(existing);
+    existing.subtasks = [...manualSubtasks, ...generatedSubtasks];
   }
 
   existing.updatedAt = new Date().toISOString();
@@ -104,12 +106,14 @@ const addSubtask = (taskId, payload) => {
     title: payload.title,
     status: payload.status || 'pending',
     order: payload.order || state.tasks[index].subtasks.length + 1,
-    estimatedMinutes: payload.estimatedMinutes ?? null
+    estimatedMinutes: payload.estimatedMinutes ?? null,
+    generated: false
   };
   state.tasks[index].subtasks.push(subtask);
   state.tasks[index].updatedAt = new Date().toISOString();
   persistTask(state.tasks[index]);
-  return { ...subtask };
+  const { generated, ...response } = subtask;
+  return response;
 };
 
 const updateSubtask = (taskId, subtaskId, payload) => {
@@ -127,7 +131,8 @@ const updateSubtask = (taskId, subtaskId, payload) => {
   state.tasks[taskIndex].updatedAt = new Date().toISOString();
   persistTask(state.tasks[taskIndex]);
 
-  return { ...subtask };
+  const { generated, ...response } = subtask;
+  return response;
 };
 
 const deleteSubtask = (taskId, subtaskId) => {

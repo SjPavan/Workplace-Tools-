@@ -34,7 +34,8 @@ const autoBreakdown = (task) => {
     title: entry,
     status: 'pending',
     order: index + 1,
-    estimatedMinutes: minutesPerSegment
+    estimatedMinutes: minutesPerSegment,
+    generated: true
   }));
 };
 
