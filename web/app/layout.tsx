@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import type { ReactNode } from 'react';
 
 import './globals.css';
 import { Providers } from './providers';
@@ -19,11 +20,11 @@ export const metadata: Metadata = {
   description: 'Authenticated Next.js scaffold with Supabase, Tailwind, and TanStack Query.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
