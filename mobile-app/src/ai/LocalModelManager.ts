@@ -98,7 +98,10 @@ export class LocalModelManager {
       return;
     }
     if (!this.loadingPromise) {
-      this.loadingPromise = this.loadModel(config);
+      this.loadingPromise = this.loadModel(config).catch((error) => {
+        this.loadingPromise = null;
+        throw error;
+      });
     }
     return this.loadingPromise;
   }
@@ -131,6 +134,7 @@ export class LocalModelManager {
     await LlamaBridge!.loadModel!(payload);
     this.lastConfig = config;
     this.loaded = true;
+    this.loadingPromise = null;
   }
 
   async unload(): Promise<void> {
@@ -170,8 +174,13 @@ export class LocalModelManager {
       if (!LlamaBridge?.streamGenerate || !this.emitter) {
         console.warn('[LocalModelManager] streamGenerate is not supported by native module, falling back to non-streaming');
       } else {
-        const subscription = this.emitter.addListener('llamaToken', (event: { token: string }) => {
-          config.onToken?.(event.token);
+        let aggregated = '';
+        const subscription = this.emitter.addListener('llamaToken', (event: { token?: string } | string) => {
+          const token = typeof event === 'string' ? event : event?.token ?? '';
+          if (token) {
+            aggregated += token;
+            config.onToken?.(token);
+          }
         });
         this.subscriptions.push(subscription);
 
@@ -199,9 +208,9 @@ export class LocalModelManager {
         }
         const finishedAt = Date.now();
         return {
-          text: '',
+          text: aggregated,
           durationMs: finishedAt - startedAt,
-          tokensGenerated: 0,
+          tokensGenerated: this.estimateTokens(aggregated),
         };
       }
     }
