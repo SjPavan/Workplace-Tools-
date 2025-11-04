@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from playwright.async_api import Page
+try:  # pragma: no cover - optional dependency guard
+    from playwright.async_api import Page
+except ImportError:  # pragma: no cover
+    Page = Any  # type: ignore
 
 from .jobs import ExtractionType, ScrapingJob
 

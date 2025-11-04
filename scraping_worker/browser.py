@@ -5,9 +5,14 @@ from __future__ import annotations
 import asyncio
 import random
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional
 
-from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+try:  # pragma: no cover - optional dependency guard
+    from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+except ImportError:  # pragma: no cover
+    Browser = BrowserContext = Page = Any  # type: ignore
+    async_playwright = None  # type: ignore
+
 from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from .config import WorkerConfig
@@ -26,6 +31,9 @@ class BrowserSession:
 
     @asynccontextmanager
     async def page(self, user_agent: Optional[str] = None) -> AsyncIterator[Page]:
+        if async_playwright is None:  # pragma: no cover - dependency guard
+            raise RuntimeError("playwright is required to create browser sessions; install playwright>=1.45.0")
+
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=self._config.headless)
             try:

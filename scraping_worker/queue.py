@@ -6,7 +6,10 @@ import asyncio
 import json
 from typing import Optional
 
-import redis.asyncio as redis_async
+try:  # pragma: no cover - optional dependency guard
+    import redis.asyncio as redis_async
+except ImportError:  # pragma: no cover
+    redis_async = None  # type: ignore
 
 from .jobs import ScrapingJob
 
@@ -28,6 +31,8 @@ class RedisJobQueue(JobQueue):
     """Redis list backed queue for scraping jobs."""
 
     def __init__(self, redis_url: str, queue_name: str) -> None:
+        if redis_async is None:  # pragma: no cover - dependency guard
+            raise RuntimeError("redis-py is required to use RedisJobQueue; install redis>=5.0.0")
         self._redis = redis_async.from_url(redis_url, decode_responses=True)
         self._queue_name = queue_name
 

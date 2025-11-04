@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from playwright.async_api import BrowserContext
+from typing import Any
+
+try:  # pragma: no cover - optional dependency guard
+    from playwright.async_api import BrowserContext
+except ImportError:  # pragma: no cover
+    BrowserContext = Any  # type: ignore
 
 _STEALTH_INIT_SCRIPT = r"""
 Object.defineProperty(navigator, 'webdriver', { get: () => false });
