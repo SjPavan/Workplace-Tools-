@@ -1,0 +1,315 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'infra/**'
+      - 'backend/**'
+      - 'web/**'
+      - 'worker/**'
+      - 'mobile/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'backend/**'
+      - 'web/**'
+      - 'worker/**'
+      - 'mobile/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      services:
+        description: 'Services to deploy (comma-separated)'
+        required: false
+        default: 'all'
+      dry_run:
+        description: 'Dry run mode'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  validate:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        npm install -g @render/cli @railway/cli vercel @expo/eas-cli
+        pip install terraform
+    
+    - name: Determine environment
+      id: env
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "environment=prod" >> $GITHUB_OUTPUT
+        elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+          echo "environment=staging" >> $GITHUB_OUTPUT
+        else
+          echo "environment=dev" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Check if should deploy
+      id: check
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+        else
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Run dry-run validation
+      run: |
+        chmod +x infra/scripts/validation/dry-run.sh
+        ./infra/scripts/validation/dry-run.sh --environment ${{ steps.env.outputs.environment }}
+    
+    - name: Upload validation results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-results-${{ steps.env.outputs.environment }}
+        path: logs/
+        retention-days: 7
+
+  deploy:
+    name: Deploy Services
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.should_deploy == 'true'
+    environment: ${{ needs.validate.outputs.environment }}
+    strategy:
+      matrix:
+        service: [backend, worker, web, mobile]
+        include:
+          - service: backend
+            platform: render
+          - service: worker
+            platform: railway
+          - service: web
+            platform: vercel
+          - service: mobile
+            platform: eas
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        npm install -g @render/cli @railway/cli vercel @expo/eas-cli
+        pip install terraform
+    
+    - name: Setup environment
+      run: |
+        chmod +x infra/scripts/setup.sh
+        ./infra/scripts/setup.sh
+    
+    - name: Deploy ${{ matrix.service }}
+      env:
+        ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        # Service-specific secrets
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      run: |
+        chmod +x infra/scripts/deploy/${{ matrix.service }}.sh
+        ./infra/scripts/deploy/${{ matrix.service }}.sh --environment ${{ needs.validate.outputs.environment }}
+    
+    - name: Run health checks
+      env:
+        ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        WEB_URL: ${{ secrets.WEB_URL }}
+        WORKER_URL: ${{ secrets.WORKER_URL }}
+      run: |
+        chmod +x infra/scripts/monitoring/health-check.sh
+        ./infra/scripts/monitoring/health-check.sh --environment ${{ needs.validate.outputs.environment }} --service ${{ matrix.service }}
+    
+    - name: Upload deployment logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: deployment-logs-${{ matrix.service }}-${{ needs.validate.outputs.environment }}
+        path: logs/
+        retention-days: 7
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.should_deploy == 'true'
+    environment: ${{ needs.validate.outputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ~1.6
+    
+    - name: Configure Terraform
+      run: |
+        cd infra/terraform
+        terraform init
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    
+    - name: Plan Terraform
+      id: plan
+      run: |
+        cd infra/terraform
+        terraform plan -var="environment=${{ needs.validate.outputs.environment }}" -out=tfplan
+      continue-on-error: true
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    
+    - name: Apply Terraform
+      if: steps.plan.outcome == 'success'
+      run: |
+        cd infra/terraform
+        terraform apply tfplan
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    
+    - name: Upload Terraform state
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: terraform-state-${{ needs.validate.outputs.environment }}
+        path: infra/terraform/
+        retention-days: 7
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy, deploy-infrastructure]
+    if: needs.validate.outputs.should_deploy == 'true'
+    environment: ${{ needs.validate.outputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        npm install -g @render/cli @railway-cli vercel
+        pip install requests pytest
+    
+    - name: Run smoke tests
+      env:
+        ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        WEB_URL: ${{ secrets.WEB_URL }}
+        WORKER_URL: ${{ secrets.WORKER_URL }}
+        SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: |
+        chmod +x infra/scripts/smoke-test.sh
+        ./infra/scripts/smoke-test.sh --environment ${{ needs.validate.outputs.environment }}
+    
+    - name: Upload smoke test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: smoke-test-results-${{ needs.validate.outputs.environment }}
+        path: logs/
+        retention-days: 7
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [validate, deploy, deploy-infrastructure, smoke-test]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.deploy.result == 'success' && needs.smoke-test.result == 'success'
+      run: |
+        echo "✅ Deployment to ${{ needs.validate.outputs.environment }} completed successfully!"
+        # Add Slack/Teams notification here if needed
+    
+    - name: Notify on failure
+      if: needs.deploy.result == 'failure' || needs.smoke-test.result == 'failure'
+      run: |
+        echo "❌ Deployment to ${{ needs.validate.outputs.environment }} failed!"
+        # Add Slack/Teams notification here if needed
+    
+    - name: Create deployment summary
+      run: |
+        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ needs.validate.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Validation**: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Infrastructure**: ${{ needs.deploy-infrastructure.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Services**: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Smoke Tests**: ${{ needs.smoke-test.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
