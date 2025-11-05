@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Workspace Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .workspace-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: #667eea;
+            color: white;
+        }
+
+        .assistant-avatar {
+            background: #10b981;
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #1f2937;
+        }
+
+        .message-content.streaming::after {
+            content: '▋';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .attachment-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .attachment-btn {
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .attachment-btn.enabled {
+            display: block;
+        }
+
+        .attachment-btn:hover:not(:disabled) {
+            background: #e5e7eb;
+        }
+
+        .attachment-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border-left: 4px solid #dc2626;
+        }
+
+        .loading {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            align-items: center;
+            color: #6b7280;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state h2 {
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="workspace-container">
+        <div class="header">
+            <h1>AI Workspace Assistant</h1>
+            <div class="status">
+                <span class="status-dot"></span>
+                <span id="statusText">Connected</span>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state">
+                <h2>Welcome to AI Workspace</h2>
+                <p>Start a conversation by typing a message below.</p>
+                <p style="font-size: 14px; margin-top: 20px;">Your chat history is automatically saved.</p>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-controls">
+                <div class="attachment-buttons">
+                    <button class="attachment-btn" id="attachFileBtn" disabled>📎 Attach File</button>
+                    <button class="attachment-btn" id="attachUrlBtn" disabled>🔗 Add URL</button>
+                </div>
+            </div>
+            <div class="input-wrapper">
+                <textarea 
+                    class="input-field" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // Configuration
+        const CONFIG = {
+            API_BASE_URL: window.location.origin,
+            SUPABASE_URL: localStorage.getItem('SUPABASE_URL') || '',
+            SUPABASE_ANON_KEY: localStorage.getItem('SUPABASE_ANON_KEY') || '',
+            FEATURE_FLAGS: {
+                ATTACHMENTS_ENABLED: false // Disabled by default as per requirements
+            }
+        };
+
+        // Initialize Supabase client (if credentials provided)
+        let supabase = null;
+        if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
+            try {
+                supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+            }
+        }
+
+        // State
+        let currentSessionId = null;
+        let messages = [];
+        let isStreaming = false;
+
+        // DOM Elements
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusText = document.getElementById('statusText');
+        const attachFileBtn = document.getElementById('attachFileBtn');
+        const attachUrlBtn = document.getElementById('attachUrlBtn');
+
+        // Feature flag handling
+        if (CONFIG.FEATURE_FLAGS.ATTACHMENTS_ENABLED) {
+            attachFileBtn.classList.add('enabled');
+            attachUrlBtn.classList.add('enabled');
+            attachFileBtn.disabled = false;
+            attachUrlBtn.disabled = false;
+        }
+
+        // Initialize
+        async function init() {
+            await loadSession();
+            setupEventListeners();
+        }
+
+        // Load or create session
+        async function loadSession() {
+            const sessionIdFromStorage = localStorage.getItem('currentSessionId');
+            
+            if (sessionIdFromStorage && supabase) {
+                try {
+                    const { data, error } = await supabase
+                        .from('chat_sessions')
+                        .select('*, messages:chat_messages(*)')
+                        .eq('id', sessionIdFromStorage)
+                        .single();
+
+                    if (data && !error) {
+                        currentSessionId = data.id;
+                        messages = data.messages || [];
+                        renderMessages();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Failed to load session:', error);
+                }
+            }
+
+            // Create new session
+            currentSessionId = generateSessionId();
+            localStorage.setItem('currentSessionId', currentSessionId);
+            
+            if (supabase) {
+                try {
+                    await supabase.from('chat_sessions').insert({
+                        id: currentSessionId,
+                        created_at: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error('Failed to create session in Supabase:', error);
+                }
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            sendBtn.addEventListener('click', handleSend);
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            });
+
+            messageInput.addEventListener('input', () => {
+                messageInput.style.height = 'auto';
+                messageInput.style.height = messageInput.scrollHeight + 'px';
+            });
+        }
+
+        // Handle send message
+        async function handleSend() {
+            const content = messageInput.value.trim();
+            if (!content || isStreaming) return;
+
+            const userMessage = {
+                id: generateMessageId(),
+                role: 'user',
+                content,
+                timestamp: new Date().toISOString()
+            };
+
+            addMessage(userMessage);
+            await persistMessage(userMessage);
+
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            isStreaming = true;
+
+            try {
+                await streamAIResponse(content);
+            } catch (error) {
+                handleError(error);
+            } finally {
+                sendBtn.disabled = false;
+                isStreaming = false;
+            }
+        }
+
+        // Stream AI response
+        async function streamAIResponse(userMessage) {
+            const assistantMessage = {
+                id: generateMessageId(),
+                role: 'assistant',
+                content: '',
+                timestamp: new Date().toISOString(),
+                streaming: true
+            };
+
+            addMessage(assistantMessage);
+
+            try {
+                // Apply safety filter
+                if (!passesSafetyFilter(userMessage)) {
+                    assistantMessage.content = 'I cannot process that request due to safety concerns.';
+                    assistantMessage.streaming = false;
+                    updateMessage(assistantMessage);
+                    await persistMessage(assistantMessage);
+                    return;
+                }
+
+                const response = await fetch(`${CONFIG.API_BASE_URL}/ai/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: userMessage,
+                        sessionId: currentSessionId,
+                        history: messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.content) {
+                                    assistantMessage.content += data.content;
+                                    updateMessage(assistantMessage);
+                                }
+                                if (data.done) {
+                                    assistantMessage.streaming = false;
+                                    updateMessage(assistantMessage);
+                                }
+                            } catch (e) {
+                                console.error('Failed to parse SSE data:', e);
+                            }
+                        }
+                    }
+                }
+
+                assistantMessage.streaming = false;
+                updateMessage(assistantMessage);
+                await persistMessage(assistantMessage);
+
+            } catch (error) {
+                assistantMessage.content = `Error: ${error.message}. Please try again.`;
+                assistantMessage.streaming = false;
+                updateMessage(assistantMessage);
+                throw error;
+            }
+        }
+
+        // Safety filter
+        function passesSafetyFilter(text) {
+            const bannedPatterns = [
+                /\b(hack|exploit|attack|malware|virus)\b/i,
+                /\b(password|credit card|ssn)\b.*\d{3,}/i
+            ];
+
+            return !bannedPatterns.some(pattern => pattern.test(text));
+        }
+
+        // Message management
+        function addMessage(message) {
+            messages.push(message);
+            renderMessages();
+        }
+
+        function updateMessage(message) {
+            const index = messages.findIndex(m => m.id === message.id);
+            if (index !== -1) {
+                messages[index] = message;
+                renderMessages();
+            }
+        }
+
+        function renderMessages() {
+            if (messages.length === 0) {
+                chatArea.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Welcome to AI Workspace</h2>
+                        <p>Start a conversation by typing a message below.</p>
+                        <p style="font-size: 14px; margin-top: 20px;">Your chat history is automatically saved.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatArea.innerHTML = messages.map(msg => `
+                <div class="message ${msg.role}">
+                    <div class="message-avatar ${msg.role}-avatar">
+                        ${msg.role === 'user' ? 'U' : 'AI'}
+                    </div>
+                    <div class="message-content ${msg.streaming ? 'streaming' : ''}">
+                        ${escapeHtml(msg.content) || 'Thinking...'}
+                    </div>
+                </div>
+            `).join('');
+
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Persist message to Supabase
+        async function persistMessage(message) {
+            if (!supabase) return;
+
+            try {
+                await supabase.from('chat_messages').insert({
+                    id: message.id,
+                    session_id: currentSessionId,
+                    role: message.role,
+                    content: message.content,
+                    created_at: message.timestamp
+                });
+            } catch (error) {
+                console.error('Failed to persist message:', error);
+            }
+        }
+
+        // Error handling
+        function handleError(error) {
+            console.error('Error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `Error: ${error.message}`;
+            chatArea.insertBefore(errorDiv, chatArea.firstChild);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Utilities
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function generateMessageId() {
+            return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
