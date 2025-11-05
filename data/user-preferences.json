@@ -1,0 +1,24 @@
+{
+  "user-pro": {
+    "channels": {
+      "push": true,
+      "email": true
+    },
+    "topics": {
+      "proactive-reminders": {
+        "push": true,
+        "email": true
+      },
+      "scraping-complete": {
+        "push": false,
+        "email": true
+      }
+    }
+  },
+  "user-silent": {
+    "channels": {
+      "push": false,
+      "email": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+# Node and environment artifacts
+node_modules/
+.env
+.env.*
+
+# Notification pipeline data files
+/data/delivery-log.ndjson
+/data/email-fallback.log
+/data/*.tmp
+
+# OS files
+.DS_Store
