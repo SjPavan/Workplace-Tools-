@@ -1,0 +1,19 @@
+{
+  "name": "proactive-intelligence-engine",
+  "version": "1.0.0",
+  "description": "Proactive intelligence engine that aggregates user context to deliver notifications and routine suggestions.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/run_proactive_engine.js",
+    "test": "node tests/run-tests.js"
+  },
+  "keywords": [
+    "proactive",
+    "notifications",
+    "context",
+    "fcm"
+  ],
+  "author": "",
+  "license": "MIT"
+}
