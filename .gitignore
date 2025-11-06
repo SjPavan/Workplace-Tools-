@@ -1,0 +1,20 @@
+# Dependency directories
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+
+# Build outputs
+NextBuild/
+.vercel/
+dist/
+out/
+
+# Miscellaneous
+.DS_Store
