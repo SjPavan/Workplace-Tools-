@@ -26,10 +26,13 @@ Add these in Vercel Dashboard → Settings → Environment Variables:
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NEXT_PUBLIC_API_URL=https://your-backend.example.com
 ```
 
 **Note:** App works with placeholders if not set. Get real values from:
-https://app.supabase.com → Your Project → Settings → API
+https://app.supabase.com → Your Project → Settings → API. The `NEXT_PUBLIC_API_URL`
+can remain pointed at `http://localhost:8000` unless you have a hosted backend for the
+AI assistant.
 
 ### Step 4: Deploy
 

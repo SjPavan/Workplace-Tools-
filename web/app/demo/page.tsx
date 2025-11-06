@@ -1,95 +1,76 @@
-import AIChat from '@/components/AIChat'
+import AIChat from '@/components/AIChat';
 
 export default function DemoPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Workplace Tools - Demo
-          </h1>
-          <p className="text-lg text-gray-600">
-            Test the AI assistant and deployment infrastructure
+    <div className="min-h-screen bg-background py-10">
+      <div className="mx-auto max-w-5xl space-y-10 px-4">
+        <header className="text-center">
+          <h1 className="text-3xl font-semibold text-foreground">Workplace Tools – Demo</h1>
+          <p className="mt-3 text-base text-muted">
+            Experiment with the AI assistant and review the deployment surface area.
           </p>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">AI Assistant</h2>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">AI Assistant</h2>
             <AIChat />
-          </div>
+          </section>
 
-          <div>
-            <h2 className="text-xl font-semibold mb-4">System Status</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="space-y-4">
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">System Status</h2>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <dl className="space-y-4 text-sm text-muted">
                 <div>
-                  <h3 className="font-medium">Frontend</h3>
-                  <p className="text-sm text-gray-600">
-                    Next.js with Supabase authentication
-                  </p>
+                  <dt className="font-medium text-foreground">Frontend</dt>
+                  <dd>Next.js with Supabase authentication scaffolded for rapid iteration.</dd>
                 </div>
-                
                 <div>
-                  <h3 className="font-medium">Backend API</h3>
-                  <p className="text-sm text-gray-600">
-                    FastAPI with mock AI responses
-                  </p>
+                  <dt className="font-medium text-foreground">Backend API</dt>
+                  <dd>FastAPI service returning mock AI responses for the chat surface.</dd>
                 </div>
-                
                 <div>
-                  <h3 className="font-medium">Database</h3>
-                  <p className="text-sm text-gray-600">
-                    Supabase PostgreSQL with RLS
-                  </p>
+                  <dt className="font-medium text-foreground">Database</dt>
+                  <dd>Supabase PostgreSQL with row-level security policies enabled.</dd>
                 </div>
-
                 <div>
-                  <h3 className="font-medium">Deployment</h3>
-                  <p className="text-sm text-gray-600">
-                    Render (Backend) + Vercel (Frontend)
-                  </p>
+                  <dt className="font-medium text-foreground">Deployment</dt>
+                  <dd>Render (Backend) + Vercel (Frontend) on free tier plans.</dd>
                 </div>
-              </div>
+              </dl>
             </div>
-          </div>
+          </section>
         </div>
 
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">API Endpoints</h2>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-medium">Health Check</h3>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  GET /health
-                </code>
-              </div>
-              
-              <div>
-                <h3 className="font-medium">AI Chat</h3>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  POST /api/ai/complete
-                </code>
-              </div>
-              
-              <div>
-                <h3 className="font-medium">AI Models</h3>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  GET /api/ai/models
-                </code>
-              </div>
-              
-              <div>
-                <h3 className="font-medium">Auth Status</h3>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  GET /auth/me
-                </code>
-              </div>
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">API Endpoints</h2>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Endpoint label="Health Check" method="GET" path="/health" />
+              <Endpoint label="AI Chat" method="POST" path="/api/ai/complete" />
+              <Endpoint label="AI Models" method="GET" path="/api/ai/models" />
+              <Endpoint label="Auth Status" method="GET" path="/auth/me" />
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
-  )
+  );
+}
+
+interface EndpointProps {
+  label: string;
+  method: string;
+  path: string;
+}
+
+function Endpoint({ label, method, path }: EndpointProps) {
+  return (
+    <div className="space-y-1 text-sm">
+      <h3 className="font-medium text-foreground">{label}</h3>
+      <code className="inline-block rounded-md border border-border bg-background/80 px-3 py-1 font-mono text-xs text-muted">
+        {method} {path}
+      </code>
+    </div>
+  );
 }

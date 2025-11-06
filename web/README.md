@@ -12,10 +12,11 @@ This project is a Next.js App Router application preconfigured with Supabase aut
 1. Copy the example environment file and supply your Supabase credentials:
 
    ```bash
-   cd web
-   cp .env.example .env.local
-   # populate NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
-   ```
+    cd web
+    cp .env.example .env.local
+    # populate NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+    # optionally set NEXT_PUBLIC_API_URL if targeting a non-local AI API
+    ```
 
 2. Install dependencies and start the development server:
 
@@ -56,6 +57,7 @@ This project is optimized for deployment on Vercel's free tier:
 4. Set environment variables (optional):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_API_URL`
 5. Deploy! Preview deployments are automatically created for PRs
 
 #### Health Check
@@ -77,6 +79,8 @@ Expected response (200 OK):
   },
   "config": {
     "supabaseConfigured": true,
+    "aiApiConfigured": false,
+    "aiApiUrl": "http://localhost:8000",
     "url": "https://your-app.vercel.app"
   }
 }
@@ -90,6 +94,7 @@ The app supports the following environment variables:
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | No (defaults to placeholder) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | No (defaults to placeholder) |
+| `NEXT_PUBLIC_API_URL` | Base URL for the AI assistant backend | No (defaults to `http://localhost:8000`) |
 
 The app will boot and run with placeholder values, but authentication features will not work until real Supabase credentials are configured.
 

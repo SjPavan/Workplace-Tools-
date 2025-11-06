@@ -1,168 +1,180 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
+import { useState, type KeyboardEvent } from 'react';
+
+import { useSupabase } from '@/components/providers/supabase-provider';
 
 interface Message {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
+const DEFAULT_API_URL = 'http://localhost:8000';
+
 export default function AIChat() {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const supabase = useSupabase();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const sendMessage = async () => {
-    if (!input.trim()) return
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput) {
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
-      content: input,
+      content: trimmedInput,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
-    setError(null)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-      
-      const response = await fetch(`${apiUrl}/api/ai/complete`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL;
+      const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+      const response = await fetch(`${normalizedApiUrl}/api/ai/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: input,
+          message: trimmedInput,
           model: 'gpt-3.5-turbo',
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`Request failed with status ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as { response?: string };
+      const assistantResponse = data.response ?? 'No response returned by the AI assistant.';
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.response,
+        content: assistantResponse,
         timestamp: new Date(),
-      }
+      };
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message')
+      setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void sendMessage();
+    }
+  };
 
   const handleAuth = async () => {
     try {
-      const supabase = createSupabaseBrowserClient()
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      setError(null);
+      await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
-
-      if (error) throw error
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed')
+      setError(err instanceof Error ? err.message : 'Authentication failed');
     }
-  }
+  };
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="border-b p-4">
-          <h2 className="text-xl font-semibold">AI Assistant</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Test the AI integration with mock responses
-          </p>
+    <div className="mx-auto max-w-2xl p-4">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+        <div className="border-b border-border bg-card/60 px-6 py-4">
+          <h2 className="text-lg font-semibold text-foreground">AI Assistant</h2>
+          <p className="text-sm text-muted">Test the AI integration with mock responses.</p>
         </div>
 
-        <div className="h-96 overflow-y-auto p-4 space-y-4">
+        <div className="flex h-96 flex-col gap-4 overflow-y-auto bg-background/60 px-6 py-4">
           {messages.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              <p>No messages yet. Start a conversation!</p>
+            <div className="flex flex-1 items-center justify-center">
+              <p className="text-sm text-muted">No messages yet. Start a conversation!</p>
             </div>
           ) : (
             messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
+              <div key={`${message.timestamp.toISOString()}-${index}`} className="flex">
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg ${
+                  className={`max-w-xs rounded-xl px-4 py-2 text-sm shadow-sm ${
                     message.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-800'
+                      ? 'ml-auto bg-primary text-white'
+                      : 'bg-border/40 text-foreground'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className="text-xs mt-1 opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
+                  <p>{message.content}</p>
+                  <p className="mt-2 text-xs text-muted">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
             ))
           )}
-          
-          {isLoading && (
+
+          {isLoading ? (
             <div className="flex justify-start">
-              <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                <p className="text-sm">Thinking...</p>
+              <div className="rounded-xl bg-border/40 px-4 py-2 text-sm text-muted shadow-sm">
+                Thinking...
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
-        {error && (
-          <div className="p-4 bg-red-50 border-t">
-            <p className="text-sm text-red-600">Error: {error}</p>
+        {error ? (
+          <div className="border-t border-red-500/30 bg-red-500/10 px-6 py-3 text-sm text-red-500">
+            Error: {error}
           </div>
-        )}
+        ) : null}
 
-        <div className="border-t p-4">
-          <div className="flex space-x-2">
+        <div className="border-t border-border bg-card/60 px-6 py-4">
+          <div className="flex gap-3">
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleInputKeyDown}
               placeholder="Type your message..."
-              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               disabled={isLoading}
             />
             <button
-              onClick={sendMessage}
+              type="button"
+              onClick={() => {
+                void sendMessage();
+              }}
               disabled={isLoading || !input.trim()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Send
+              {isLoading ? 'Sending…' : 'Send'}
             </button>
           </div>
         </div>
 
-        <div className="border-t p-4">
+        <div className="border-t border-border bg-card/60 px-6 py-3 text-right text-sm text-muted">
           <button
+            type="button"
             onClick={handleAuth}
-            className="text-sm text-blue-600 hover:underline"
+            className="font-medium text-primary transition hover:underline"
           >
             Test Supabase Authentication
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

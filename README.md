@@ -89,6 +89,7 @@ This project is configured for easy deployment to Vercel's free tier.
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL from project settings | No (defaults to placeholder) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous/public key from project settings | No (defaults to placeholder) |
+| `NEXT_PUBLIC_API_URL` | Base URL for the AI assistant API endpoints | No (defaults to `http://localhost:8000`) |
 
 To get these values:
 1. Go to [app.supabase.com](https://app.supabase.com)
@@ -122,6 +123,8 @@ This should return a 200 OK response with:
   },
   "config": {
     "supabaseConfigured": true,
+    "aiApiConfigured": false,
+    "aiApiUrl": "http://localhost:8000",
     "url": "https://your-deployment-url.vercel.app"
   }
 }

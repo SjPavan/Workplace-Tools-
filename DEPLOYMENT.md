@@ -41,8 +41,9 @@ The web application is a Next.js App Router application located in the `web/` di
    |----------|-------|-------------|
    | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | All |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | All |
+   | `NEXT_PUBLIC_API_URL` | Base URL for the AI assistant backend (optional) | All |
 
-   **Note:** The app will work with placeholder values if these are not set. Authentication features will be limited without real Supabase credentials.
+   **Note:** The app will work with placeholder values if these are not set. Authentication features will be limited without real Supabase credentials. The AI assistant will target `http://localhost:8000` unless `NEXT_PUBLIC_API_URL` is configured.
 
 4. **Deploy:**
    - Click "Deploy"
@@ -117,6 +118,7 @@ export default nextConfig;
 |----------|-------------|---------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Supabase Dashboard → Settings → API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous/public key | Supabase Dashboard → Settings → API → Project API keys (anon/public) |
+| `NEXT_PUBLIC_API_URL` | Base URL for the AI assistant backend (optional) | Hosted backend URL or `http://localhost:8000` for local testing |
 
 ### Getting Supabase Credentials
 
@@ -136,12 +138,15 @@ export default nextConfig;
    - Value: `https://your-project.supabase.co`
    - Environment: Select all (Production, Preview, Development)
 4. Repeat for `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Redeploy for changes to take effect
+5. (Optional) Add `NEXT_PUBLIC_API_URL` pointing to your hosted backend (or leave unset to use `http://localhost:8000`)
+6. Redeploy for changes to take effect
 
 #### Via CLI:
 ```bash
 vercel env add NEXT_PUBLIC_SUPABASE_URL
 vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Optional: configure AI assistant backend base URL
+vercel env add NEXT_PUBLIC_API_URL
 ```
 
 ## Preview Deployments
@@ -180,6 +185,8 @@ Expected response (200 OK):
   },
   "config": {
     "supabaseConfigured": true,
+    "aiApiConfigured": false,
+    "aiApiUrl": "http://localhost:8000",
     "url": "https://your-project.vercel.app"
   }
 }
@@ -188,6 +195,10 @@ Expected response (200 OK):
 The `supabaseConfigured` field indicates whether Supabase environment variables are set:
 - `true`: Real Supabase credentials configured
 - `false`: Using placeholder values
+
+The `aiApiConfigured` field indicates whether a non-local AI backend has been provisioned:
+- `true`: `NEXT_PUBLIC_API_URL` points to a hosted API
+- `false`: Requests will default to `http://localhost:8000`
 
 ## Deployment Checklist
 
