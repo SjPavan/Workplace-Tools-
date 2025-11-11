@@ -2,11 +2,51 @@
 
 Collection of workplace productivity tools including a Next.js web application.
 
+## Quick Start
+
+Get up and running in minutes:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+**Need detailed setup instructions?** See the [Complete Installation Guide](./docs/docs/getting-started/installation.md)
+
+## 📚 Documentation
+
+Comprehensive documentation is available at:
+
+- **[User Guide](./docs/docs/user-guide/overview.md)** - Features and workflows
+- **[Getting Started](./docs/docs/getting-started/quick-start.md)** - Quick start and setup
+- **[Tutorials](./docs/docs/tutorials/basic-usage.md)** - Step-by-step guides
+- **[Troubleshooting](./docs/docs/support/troubleshooting.md)** - Common issues and solutions
+- **[FAQ](./docs/docs/support/faq.md)** - Frequently asked questions
+- **[Privacy Policy](./docs/docs/support/privacy-policy.md)** - Data privacy & security
+- **[Developer Guide](./docs/docs/development/architecture.md)** - Architecture and development
+- **[Full Documentation Site](./docs/)** - Built with Docusaurus
+
+### Building Documentation
+
+To build and view the documentation locally:
+
+```bash
+cd docs
+npm install
+npm run start
+```
+
+Documentation will be available at [http://localhost:3000](http://localhost:3000)
+
 ## Project Structure
 
 This is a monorepo containing:
 
 - **web/** - Next.js web application with Supabase authentication, Tailwind CSS, and offline support
+- **docs/** - Comprehensive documentation built with Docusaurus
 
 ## Web Application
 
@@ -164,6 +204,28 @@ From the `web/` directory:
 - **State Management:** Zustand + TanStack Query
 - **Theme:** next-themes (light/dark mode)
 - **Offline:** Progressive service worker
+
+## Release Information
+
+- **Current Version:** 1.0.0
+- **Release Date:** November 2024
+- **Changelog:** See [CHANGELOG.md](./CHANGELOG.md)
+- **Release Checklist:** See [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+- All tests pass: `npm test`
+- Code is properly formatted
+- Documentation is updated
+- CHANGELOG.md is updated
+
+## Support
+
+- 📖 **Documentation:** See [docs/](./docs/)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/workplace-tools/repository/issues)
+- 💬 **Questions:** [GitHub Discussions](https://github.com/workplace-tools/repository/discussions)
+- 📧 **Email:** support@workplace-tools.example.com
 
 ## License
 
