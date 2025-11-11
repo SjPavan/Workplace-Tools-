@@ -1,0 +1,32 @@
+{
+  "name": "workplace-tools",
+  "version": "1.0.0",
+  "description": "Workplace Tools - Collection of productive utilities",
+  "private": true,
+  "workspaces": [
+    "web",
+    "docs"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "dev:docs": "npm run start --workspace=docs",
+    "build": "npm run build --workspace=web && npm run build --workspace=docs",
+    "start": "npm run start --workspace=web",
+    "test": "npm test --workspace=web",
+    "lint": "npm run lint --workspace=web",
+    "typecheck": "npm run typecheck --workspace=web"
+  },
+  "keywords": [
+    "workplace",
+    "tools",
+    "productivity",
+    "next.js",
+    "supabase"
+  ],
+  "author": "Workplace Tools Team",
+  "license": "Private",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
