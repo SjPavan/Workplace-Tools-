@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Supabase Starter',
-  description: 'Authenticated Next.js scaffold with Supabase, Tailwind, and TanStack Query.',
+  title: 'Workplace Tools',
+  description: 'A comprehensive suite of workplace productivity tools built with Next.js, Supabase, and modern web technologies.',
 };
 
 export default function RootLayout({
