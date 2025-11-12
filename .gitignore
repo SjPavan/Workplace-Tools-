@@ -1,3 +1,14 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -9,25 +20,22 @@ yarn-error.log*
 .env*.local
 .env.production
 
-# Editor directories
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Temporary files
+*.tmp
+*.temp
 
-# OS
-.DS_Store
-Thumbs.db
+# Logs
+logs/
+*.log
+
+# Coverage reports
+coverage/
+.nyc_output
 
 # Build outputs
 dist/
 build/
 out/
-
-# Logs
-logs/
-*.log
 
 # Vercel
 .vercel

@@ -14,6 +14,18 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000)
 
+## Standalone HTML Tools
+
+In addition to the Next.js application, the repository includes standalone browser-based utilities located at the repository root:
+
+- **[Workplace Tools Dashboard](./index.html)** – Launch pad that links to every utility and highlights keyboard shortcuts.
+- **[Sentence Case Converter](./sentence_case_converter.html)** – Automatically converts text to sentence case with real-time previews.
+- **[Title Case Converter](./title_case_converter.html)** – Applies headline-friendly capitalization rules and supports quick copy actions.
+- **[Text Cleaner](./text_cleaner.html)** – Removes extra whitespace, normalizes punctuation, and lets you configure cleaning options.
+- **[Text Analyzer](./text_analyzer.html)** – Provides rich statistics including character counts, reading time, and lexical diversity.
+
+Open any of these HTML files directly in your browser to use them instantly—no build step required.
+
 **Need detailed setup instructions?** See the [Complete Installation Guide](./docs/docs/getting-started/installation.md)
 
 ## 📚 Documentation
