@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getMigrationStatus } from '@/lib/database/migrations';
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
@@ -10,6 +11,27 @@ export async function GET(request: NextRequest) {
 
   const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://demo.supabase.co');
   const aiApiConfigured = Boolean(aiApiUrl && aiApiUrl !== defaultAiApiUrl);
+
+  // Check storage layer status
+  let storageStatus: { available: boolean; migrations: { applied: string[]; pending: string[]; total: number } } = { 
+    available: false, 
+    migrations: { applied: [], pending: [], total: 0 } 
+  };
+  if (supabaseConfigured) {
+    try {
+      const migrationStatus = await getMigrationStatus();
+      storageStatus = { 
+        available: true, 
+        migrations: migrationStatus 
+      };
+    } catch (error) {
+      console.warn('Storage health check failed:', error);
+      storageStatus = { 
+        available: false, 
+        migrations: { applied: [], pending: [], total: 0 } 
+      };
+    }
+  }
 
   // Test internal API endpoints
   const apiEndpoints = [
@@ -66,9 +88,11 @@ export async function GET(request: NextRequest) {
     ),
     features: {
       authentication: supabaseConfigured,
+      storage: storageStatus.available,
       aiChat: true,
       themeToggle: true,
       serviceWorker: true,
     },
+    storage: storageStatus,
   });
 }

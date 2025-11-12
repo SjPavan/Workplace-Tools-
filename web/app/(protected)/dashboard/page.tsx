@@ -7,7 +7,6 @@ export const metadata: Metadata = {
 };
 
 import AIChat from '@/components/AIChat';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
