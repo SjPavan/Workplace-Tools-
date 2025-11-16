@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Developer documentation and architecture overview
 - APK installation guide
 - Release checklist and changelog template
+- Standalone HTML productivity tools (dashboard, sentence case, title case, text cleaner, analyzer)
 
 ### Changed
 - Updated README with quick start and docs link

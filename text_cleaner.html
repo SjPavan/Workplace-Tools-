@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text Cleaner - Remove Extra Spaces & Format Text</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071029 0%, #0b1220 100%); color:#e6eef6}
+    .wrap{width:min(900px,94%); padding:28px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    h1{margin:0 0 8px; font-size:20px}
+    p.lead{margin:0 0 18px; color:var(--muted)}
+    .options{margin-bottom:16px}
+    .option-group{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px}
+    .option{display:flex; align-items:center; gap:6px}
+    .option input[type="checkbox"]{margin:0}
+    .option label{font-size:14px; color:var(--muted); cursor:pointer}
+    .grid{display:grid; gap:12px; grid-template-columns:1fr 1fr}
+    .full{grid-column:1/-1}
+    textarea, .output{width:100%; min-height:120px; padding:14px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:var(--card); color:inherit; font-size:15px; line-height:1.5; resize:vertical}
+    .output{white-space:pre-wrap; overflow:auto}
+    .controls{display:flex; gap:8px; align-items:center}
+    button{background:var(--accent); color:#022; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600}
+    button.secondary{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); font-weight:600}
+    .small{font-size:13px; padding:8px 10px}
+    .status{font-size:13px; color:var(--muted)}
+    footer{margin-top:14px; display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:13px}
+    .stats{display:flex; gap:16px; font-size:12px; color:var(--muted)}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <h1>Text Cleaner</h1>
+    <p class="lead">Clean and format text by removing extra spaces, line breaks, and normalizing formatting. Use <strong>Copy</strong> to copy the result.</p>
+
+    <div class="options">
+      <div class="option-group">
+        <div class="option">
+          <input type="checkbox" id="removeExtraSpaces" checked>
+          <label for="removeExtraSpaces">Remove extra spaces</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="removeLineBreaks" checked>
+          <label for="removeLineBreaks">Remove line breaks</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="removeTabs" checked>
+          <label for="removeTabs">Remove tabs</label>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <input type="checkbox" id="trimLines">
+          <label for="trimLines">Trim each line</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="removeEmptyLines">
+          <label for="removeEmptyLines">Remove empty lines</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="normalizePunctuation">
+          <label for="normalizePunctuation">Normalize punctuation</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="full">
+        <label for="input" style="display:block;margin-bottom:6px;color:var(--muted)">Input</label>
+        <textarea id="input" placeholder="Paste messy text here..." aria-label="Input text"></textarea>
+      </div>
+
+      <div>
+        <label for="output" style="display:block;margin-bottom:6px;color:var(--muted)">Output (Cleaned)</label>
+        <div id="output" class="output" role="textbox" aria-readonly="true" tabindex="0"></div>
+        <div class="stats">
+          <span id="charCount">Characters: 0</span>
+          <span id="wordCount">Words: 0</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="controls">
+            <button id="copyBtn">Copy</button>
+            <button id="pasteBtn" class="secondary small">Paste</button>
+            <button id="clearBtn" class="secondary small">Clear</button>
+          </div>
+        </div>
+        <div class="status" id="status">Auto-cleans as you type.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Tip: Press <kbd>Ctrl/⌘ + Enter</kbd> to copy output quickly.</div>
+      <div>&nbsp;</div>
+    </footer>
+  </main>
+
+<script>
+function debounce(fn, wait){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(()=>fn.apply(this,args), wait);
+  }
+}
+
+function cleanText(str, options){
+  if(!str) return '';
+  
+  let result = str;
+  
+  // Remove tabs
+  if(options.removeTabs){
+    result = result.replace(/\t/g, ' ');
+  }
+  
+  // Trim each line
+  if(options.trimLines){
+    result = result.split('\n').map(line => line.trim()).join('\n');
+  }
+  
+  // Remove empty lines
+  if(options.removeEmptyLines){
+    result = result.split('\n').filter(line => line.trim() !== '').join('\n');
+  }
+  
+  // Remove line breaks
+  if(options.removeLineBreaks){
+    result = result.replace(/\n+/g, ' ');
+  }
+  
+  // Remove extra spaces
+  if(options.removeExtraSpaces){
+    result = result.replace(/\s+/g, ' ').trim();
+  }
+  
+  // Normalize punctuation
+  if(options.normalizePunctuation){
+    // Fix spaces around punctuation
+    result = result.replace(/\s+([,.!?;:])/g, '$1');
+    result = result.replace(/([,.!?;:])\s*/g, '$1 ');
+    result = result.replace(/\s+/g, ' ').trim();
+  }
+  
+  return result;
+}
+
+function getStats(str){
+  const charCount = str.length;
+  const wordCount = str.trim() ? str.trim().split(/\s+/).length : 0;
+  return { charCount, wordCount };
+}
+
+const inputEl = document.getElementById('input');
+const outputEl = document.getElementById('output');
+const copyBtn = document.getElementById('copyBtn');
+const pasteBtn = document.getElementById('pasteBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusEl = document.getElementById('status');
+const charCountEl = document.getElementById('charCount');
+const wordCountEl = document.getElementById('wordCount');
+
+// Options
+const removeExtraSpacesEl = document.getElementById('removeExtraSpaces');
+const removeLineBreaksEl = document.getElementById('removeLineBreaks');
+const removeTabsEl = document.getElementById('removeTabs');
+const trimLinesEl = document.getElementById('trimLines');
+const removeEmptyLinesEl = document.getElementById('removeEmptyLines');
+const normalizePunctuationEl = document.getElementById('normalizePunctuation');
+
+function getOptions(){
+  return {
+    removeExtraSpaces: removeExtraSpacesEl.checked,
+    removeLineBreaks: removeLineBreaksEl.checked,
+    removeTabs: removeTabsEl.checked,
+    trimLines: trimLinesEl.checked,
+    removeEmptyLines: removeEmptyLinesEl.checked,
+    normalizePunctuation: normalizePunctuationEl.checked
+  };
+}
+
+function convertAndShow(){
+  const raw = inputEl.value;
+  const options = getOptions();
+  const cleaned = cleanText(raw, options);
+  outputEl.textContent = cleaned;
+  
+  const stats = getStats(cleaned);
+  charCountEl.textContent = `Characters: ${stats.charCount}`;
+  wordCountEl.textContent = `Words: ${stats.wordCount}`;
+}
+
+const autoConvert = debounce(() => {
+  convertAndShow();
+  statusEl.textContent = 'Cleaned automatically — last updated ' + new Date().toLocaleTimeString();
+}, 220);
+
+inputEl.addEventListener('input', autoConvert);
+
+// Option change listeners
+[removeExtraSpacesEl, removeLineBreaksEl, removeTabsEl, trimLinesEl, removeEmptyLinesEl, normalizePunctuationEl].forEach(el => {
+  el.addEventListener('change', autoConvert);
+});
+
+convertAndShow();
+
+copyBtn.addEventListener('click', async () => {
+  try{
+    const text = outputEl.textContent;
+    if(!text){
+      statusEl.textContent = 'Nothing to copy — output is empty.';
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    statusEl.textContent = 'Copied to clipboard ✓';
+    copyBtn.textContent = 'Copied!';
+    setTimeout(()=> copyBtn.textContent = 'Copy', 1400);
+  }catch(err){
+    statusEl.textContent = 'Copy failed — your browser may block clipboard access.';
+  }
+});
+
+pasteBtn.addEventListener('click', async () => {
+  try{
+    const text = await navigator.clipboard.readText();
+    inputEl.value = text;
+    convertAndShow();
+    statusEl.textContent = 'Pasted from clipboard.';
+  }catch(err){
+    statusEl.textContent = 'Paste failed — clipboard permission denied.';
+  }
+});
+
+clearBtn.addEventListener('click', () => {
+  inputEl.value = '';
+  outputEl.textContent = '';
+  charCountEl.textContent = 'Characters: 0';
+  wordCountEl.textContent = 'Words: 0';
+  statusEl.textContent = 'Cleared.';
+});
+
+inputEl.addEventListener('keydown', (e) =>{
+  if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+    copyBtn.click();
+  }
+});
+
+outputEl.addEventListener('click', ()=>{
+  const range = document.createRange();
+  range.selectNodeContents(outputEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+
+</script>
+</body>
+</html>

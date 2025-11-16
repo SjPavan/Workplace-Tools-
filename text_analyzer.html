@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text Analyzer - Character & Word Counter</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071029 0%, #0b1220 100%); color:#e6eef6}
+    .wrap{width:min(1000px,94%); padding:28px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    h1{margin:0 0 8px; font-size:20px}
+    p.lead{margin:0 0 18px; color:var(--muted)}
+    .main-content{display:grid; gap:24px}
+    .input-section{grid-column:1}
+    .stats-section{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px}
+    .stat-card{background:var(--card); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:16px; text-align:center}
+    .stat-value{font-size:28px; font-weight:700; color:var(--accent); margin-bottom:4px}
+    .stat-label{font-size:13px; color:var(--muted)}
+    .details-section{margin-top:24px}
+    .details-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px}
+    .detail-card{background:var(--card); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:16px}
+    .detail-title{font-size:14px; font-weight:600; margin-bottom:12px; color:var(--muted)}
+    .detail-item{display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px}
+    .detail-label{color:var(--muted)}
+    .detail-value{font-weight:500}
+    textarea{width:100%; min-height:200px; padding:14px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:var(--card); color:inherit; font-size:15px; line-height:1.5; resize:vertical}
+    .controls{display:flex; gap:8px; align-items:center; margin-top:12px}
+    button{background:var(--accent); color:#022; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600}
+    button.secondary{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); font-weight:600}
+    .small{font-size:13px; padding:8px 10px}
+    .status{font-size:13px; color:var(--muted); margin-top:8px}
+    footer{margin-top:24px; display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:13px}
+    @media (max-width:720px){.stats-section{grid-template-columns:repeat(2, 1fr)} .details-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <h1>Text Analyzer</h1>
+    <p class="lead">Get detailed statistics about your text including character count, word count, reading time, and more. Analysis updates in real-time.</p>
+
+    <div class="main-content">
+      <div class="input-section">
+        <label for="input" style="display:block;margin-bottom:6px;color:var(--muted)">Input Text</label>
+        <textarea id="input" placeholder="Paste or type your text here to analyze..." aria-label="Input text"></textarea>
+        <div class="controls">
+          <button id="pasteBtn" class="secondary small">Paste</button>
+          <button id="clearBtn" class="secondary small">Clear</button>
+          <button id="sampleBtn" class="secondary small">Load Sample</button>
+        </div>
+        <div class="status" id="status">Analysis updates automatically as you type.</div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stat-card">
+          <div class="stat-value" id="charCount">0</div>
+          <div class="stat-label">Characters</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wordCount">0</div>
+          <div class="stat-label">Words</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="sentenceCount">0</div>
+          <div class="stat-label">Sentences</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="paragraphCount">0</div>
+          <div class="stat-label">Paragraphs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="readingTime">0m</div>
+          <div class="stat-label">Reading Time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="speakingTime">0m</div>
+          <div class="stat-label">Speaking Time</div>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <div class="details-grid">
+          <div class="detail-card">
+            <h4 class="detail-title">Character Details</h4>
+            <div class="detail-item">
+              <span class="detail-label">No spaces:</span>
+              <span class="detail-value" id="charsNoSpaces">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Letters only:</span>
+              <span class="detail-value" id="lettersOnly">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Numbers only:</span>
+              <span class="detail-value" id="numbersOnly">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Punctuation:</span>
+              <span class="detail-value" id="punctuationCount">0</span>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h4 class="detail-title">Word Details</h4>
+            <div class="detail-item">
+              <span class="detail-label">Unique words:</span>
+              <span class="detail-value" id="uniqueWords">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Avg word length:</span>
+              <span class="detail-value" id="avgWordLength">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Longest word:</span>
+              <span class="detail-value" id="longestWord">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Shortest word:</span>
+              <span class="detail-value" id="shortestWord">-</span>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h4 class="detail-title">Sentence Details</h4>
+            <div class="detail-item">
+              <span class="detail-label">Avg sentence length:</span>
+              <span class="detail-value" id="avgSentenceLength">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Longest sentence:</span>
+              <span class="detail-value" id="longestSentence">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Shortest sentence:</span>
+              <span class="detail-value" id="shortestSentence">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Questions:</span>
+              <span class="detail-value" id="questionCount">0</span>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h4 class="detail-title">Content Analysis</h4>
+            <div class="detail-item">
+              <span class="detail-label">Lines:</span>
+              <span class="detail-value" id="lineCount">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Empty lines:</span>
+              <span class="detail-value" id="emptyLineCount">0</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Uppercase ratio:</span>
+              <span class="detail-value" id="uppercaseRatio">0%</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Digits ratio:</span>
+              <span class="detail-value" id="digitsRatio">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Tip: Analysis updates in real-time as you type or paste text.</div>
+      <div>&nbsp;</div>
+    </footer>
+  </main>
+
+<script>
+function debounce(fn, wait){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(()=>fn.apply(this,args), wait);
+  }
+}
+
+function analyzeText(text){
+  if (!text) {
+    return {
+      charCount: 0,
+      charsWithoutSpaces: 0,
+      lettersOnly: 0,
+      numbersOnly: 0,
+      punctuationCount: 0,
+      wordCount: 0,
+      uniqueWords: 0,
+      avgWordLength: 0,
+      longestWord: '-',
+      shortestWord: '-',
+      sentenceCount: 0,
+      avgSentenceLength: 0,
+      longestSentence: 0,
+      shortestSentence: 0,
+      questionCount: 0,
+      paragraphCount: 0,
+      lineCount: 0,
+      emptyLineCount: 0,
+      uppercaseRatio: 0,
+      digitsRatio: 0,
+      readingTime: '0m',
+      speakingTime: '0m'
+    };
+  }
+
+  // Basic counts
+  const charCount = text.length;
+  const charsWithoutSpaces = text.replace(/\s/g, '').length;
+  const lettersOnly = (text.match(/[a-zA-Z]/g) || []).length;
+  const numbersOnly = (text.match(/[0-9]/g) || []).length;
+  const punctuationCount = (text.match(/[.,!?;:'"()[\]{}]/g) || []).length;
+
+  // Word analysis
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  const wordCount = words.length;
+  const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
+  const avgWordLength = wordCount > 0 ? (words.reduce((sum, word) => sum + word.length, 0) / wordCount).toFixed(1) : 0;
+  const longestWord = words.length > 0 ? words.reduce((a, b) => a.length > b.length ? a : b) : '-';
+  const shortestWord = words.length > 0 ? words.reduce((a, b) => a.length < b.length ? a : b) : '-';
+
+  // Sentence analysis
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const sentenceCount = sentences.length;
+  const avgSentenceLength = sentenceCount > 0 ? Math.round(sentences.reduce((sum, s) => sum + s.trim().split(/\s+/).length, 0) / sentenceCount) : 0;
+  const sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
+  const longestSentence = sentenceLengths.length > 0 ? Math.max(...sentenceLengths) : 0;
+  const shortestSentence = sentenceLengths.length > 0 ? Math.min(...sentenceLengths) : 0;
+  const questionCount = (text.match(/\?/g) || []).length;
+
+  // Paragraph and line analysis
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+  const paragraphCount = paragraphs.length;
+  const lines = text.split('\n');
+  const lineCount = lines.length;
+  const emptyLineCount = lines.filter(line => line.trim() === '').length;
+
+  // Ratios
+  const uppercaseCount = (text.match(/[A-Z]/g) || []).length;
+  const uppercaseRatio = charCount > 0 ? Math.round((uppercaseCount / charCount) * 100) : 0;
+  const digitsRatio = charCount > 0 ? Math.round((numbersOnly / charCount) * 100) : 0;
+
+  // Reading and speaking time (average reading speed: 200 words/min, speaking: 130 words/min)
+  const readingTimeMinutes = Math.ceil(wordCount / 200);
+  const speakingTimeMinutes = Math.ceil(wordCount / 130);
+  const readingTime = readingTimeMinutes < 60 ? `${readingTimeMinutes}m` : `${Math.floor(readingTimeMinutes / 60)}h ${readingTimeMinutes % 60}m`;
+  const speakingTime = speakingTimeMinutes < 60 ? `${speakingTimeMinutes}m` : `${Math.floor(speakingTimeMinutes / 60)}h ${speakingTimeMinutes % 60}m`;
+
+  return {
+    charCount,
+    charsWithoutSpaces,
+    lettersOnly,
+    numbersOnly,
+    punctuationCount,
+    wordCount,
+    uniqueWords,
+    avgWordLength,
+    longestWord,
+    shortestWord,
+    sentenceCount,
+    avgSentenceLength,
+    longestSentence,
+    shortestSentence,
+    questionCount,
+    paragraphCount,
+    lineCount,
+    emptyLineCount,
+    uppercaseRatio,
+    digitsRatio,
+    readingTime,
+    speakingTime
+  };
+}
+
+const inputEl = document.getElementById('input');
+const statusEl = document.getElementById('status');
+
+// Stats elements
+const charCountEl = document.getElementById('charCount');
+const wordCountEl = document.getElementById('wordCount');
+const sentenceCountEl = document.getElementById('sentenceCount');
+const paragraphCountEl = document.getElementById('paragraphCount');
+const readingTimeEl = document.getElementById('readingTime');
+const speakingTimeEl = document.getElementById('speakingTime');
+
+// Details elements
+const charsNoSpacesEl = document.getElementById('charsNoSpaces');
+const lettersOnlyEl = document.getElementById('lettersOnly');
+const numbersOnlyEl = document.getElementById('numbersOnly');
+const punctuationCountEl = document.getElementById('punctuationCount');
+const uniqueWordsEl = document.getElementById('uniqueWords');
+const avgWordLengthEl = document.getElementById('avgWordLength');
+const longestWordEl = document.getElementById('longestWord');
+const shortestWordEl = document.getElementById('shortestWord');
+const avgSentenceLengthEl = document.getElementById('avgSentenceLength');
+const longestSentenceEl = document.getElementById('longestSentence');
+const shortestSentenceEl = document.getElementById('shortestSentence');
+const questionCountEl = document.getElementById('questionCount');
+const lineCountEl = document.getElementById('lineCount');
+const emptyLineCountEl = document.getElementById('emptyLineCount');
+const uppercaseRatioEl = document.getElementById('uppercaseRatio');
+const digitsRatioEl = document.getElementById('digitsRatio');
+
+function updateAnalysis(){
+  const text = inputEl.value;
+  const stats = analyzeText(text);
+
+  // Update main stats
+  charCountEl.textContent = stats.charCount.toLocaleString();
+  wordCountEl.textContent = stats.wordCount.toLocaleString();
+  sentenceCountEl.textContent = stats.sentenceCount.toLocaleString();
+  paragraphCountEl.textContent = stats.paragraphCount.toLocaleString();
+  readingTimeEl.textContent = stats.readingTime;
+  speakingTimeEl.textContent = stats.speakingTime;
+
+  // Update details
+  charsNoSpacesEl.textContent = stats.charsWithoutSpaces.toLocaleString();
+  lettersOnlyEl.textContent = stats.lettersOnly.toLocaleString();
+  numbersOnlyEl.textContent = stats.numbersOnly.toLocaleString();
+  punctuationCountEl.textContent = stats.punctuationCount.toLocaleString();
+  uniqueWordsEl.textContent = stats.uniqueWords.toLocaleString();
+  avgWordLengthEl.textContent = stats.avgWordLength;
+  longestWordEl.textContent = stats.longestWord;
+  shortestWordEl.textContent = stats.shortestWord;
+  avgSentenceLengthEl.textContent = stats.avgSentenceLength;
+  longestSentenceEl.textContent = stats.longestSentence;
+  shortestSentenceEl.textContent = stats.shortestSentence;
+  questionCountEl.textContent = stats.questionCount.toLocaleString();
+  lineCountEl.textContent = stats.lineCount.toLocaleString();
+  emptyLineCountEl.textContent = stats.emptyLineCount.toLocaleString();
+  uppercaseRatioEl.textContent = `${stats.uppercaseRatio}%`;
+  digitsRatioEl.textContent = `${stats.digitsRatio}%`;
+
+  statusEl.textContent = `Analysis complete — ${stats.wordCount} words, ${stats.charCount} characters`;
+}
+
+const autoAnalyze = debounce(updateAnalysis, 300);
+
+inputEl.addEventListener('input', autoAnalyze);
+
+// Button handlers
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+  try{
+    const text = await navigator.clipboard.readText();
+    inputEl.value = text;
+    updateAnalysis();
+    statusEl.textContent = 'Pasted from clipboard and analyzed.';
+  }catch(err){
+    statusEl.textContent = 'Paste failed — clipboard permission denied.';
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  inputEl.value = '';
+  updateAnalysis();
+  statusEl.textContent = 'Cleared.';
+});
+
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  const sampleText = `The quick brown fox jumps over the lazy dog. This pangram sentence contains every letter of the alphabet at least once!
+
+Text analysis is the process of examining written text to extract meaningful information. It involves counting characters, words, sentences, and paragraphs to understand the structure and complexity of the content.
+
+Did you know? The average reading speed for adults is approximately 200 words per minute. However, this can vary significantly based on the complexity of the text and the reader's familiarity with the subject matter.
+
+What's your favorite type of text to analyze? Some people prefer analyzing technical documents, while others enjoy working with creative writing or news articles.`;
+  
+  inputEl.value = sampleText;
+  updateAnalysis();
+  statusEl.textContent = 'Sample text loaded and analyzed.';
+});
+
+// Initial analysis
+updateAnalysis();
+
+</script>
+</body>
+</html>
