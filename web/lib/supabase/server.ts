@@ -3,12 +3,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 import { getSupabaseConfig } from '@/lib/env';
+import type { Database } from './types';
 
-export async function createSupabaseServerClient(): Promise<SupabaseClient> {
+export async function createSupabaseServerClient(): Promise<SupabaseClient<Database>> {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
   const cookieStore = await cookies();
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value;
@@ -39,5 +40,5 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
         }
       },
     },
-  }) as SupabaseClient;
+  }) as SupabaseClient<Database>;
 }

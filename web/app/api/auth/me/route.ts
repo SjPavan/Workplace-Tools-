@@ -1,15 +1,19 @@
-import { createServerComponentClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const supabase = createServerComponentClient(
-      { cookies: () => cookieStore },
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key-for-development-only',
       {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co',
-        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key-for-development-only',
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+        },
       }
     );
 
