@@ -1,31 +1,40 @@
 import { NextResponse } from 'next/server';
+import { createGeminiService } from '@/lib/services/gemini';
 
 export async function GET() {
-  // Mock available AI models
-  const models = [
-    {
-      id: 'gpt-3.5-turbo',
-      name: 'GPT-3.5 Turbo',
-      description: 'Fast and efficient model for most tasks',
-      maxTokens: 4096,
-    },
-    {
-      id: 'gpt-4',
-      name: 'GPT-4',
-      description: 'Most capable model for complex tasks',
-      maxTokens: 8192,
-    },
-    {
-      id: 'gpt-4-turbo',
-      name: 'GPT-4 Turbo',
-      description: 'Faster version of GPT-4 with larger context',
-      maxTokens: 128000,
-    },
-  ];
+  try {
+    const geminiService = createGeminiService();
+    const models = geminiService.getAvailableModels();
 
-  return NextResponse.json({
-    models,
-    default: 'gpt-3.5-turbo',
-    timestamp: new Date().toISOString(),
-  });
+    return NextResponse.json({
+      models,
+      default: 'gemini-1.5-flash',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    
+    // Fallback to static models if service fails
+    const fallbackModels = [
+      {
+        id: 'gemini-1.5-flash',
+        name: 'Gemini 1.5 Flash',
+        description: 'Fast and efficient model for most tasks',
+        maxTokens: 1048576,
+      },
+      {
+        id: 'gemini-1.5-pro',
+        name: 'Gemini 1.5 Pro',
+        description: 'Most capable model for complex tasks',
+        maxTokens: 2097152,
+      },
+    ];
+
+    return NextResponse.json({
+      models: fallbackModels,
+      default: 'gemini-1.5-flash',
+      timestamp: new Date().toISOString(),
+      error: 'Using fallback models due to service error'
+    });
+  }
 }
