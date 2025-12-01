@@ -11,8 +11,13 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
+  // Return a placeholder during SSR/hydration
   if (!mounted) {
-    return null;
+    return (
+      <div className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+        Loading...
+      </div>
+    );
   }
 
   const isDark = resolvedTheme === 'dark';
